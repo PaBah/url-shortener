@@ -46,14 +46,14 @@ func (sh ShortenerHandler) ServeHTTP(res http.ResponseWriter, req *http.Request)
 	}
 }
 
-func AddURL(Url string) (shortURL string) {
+func AddURL(Data string) (shortURL string) {
 	if Urls == nil {
 		Urls = make(map[string]string)
 	}
 	h := fnv.New32()
-	h.Write([]byte(Url))
+	h.Write([]byte(Data))
 	shortURL = hex.EncodeToString(h.Sum(nil))
-	Urls[shortURL] = Url
+	Urls[shortURL] = Data
 	fmt.Println(Urls)
 	return
 }
