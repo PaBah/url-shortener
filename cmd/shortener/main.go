@@ -1,4 +1,4 @@
-package shortener
+package main
 
 import (
 	"encoding/hex"
