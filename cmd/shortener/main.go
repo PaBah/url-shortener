@@ -1,9 +1,8 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
-	"hash/fnv"
+	"github.com/PaBah/url-shortener.git/cmd/shortener/storage"
 	"io"
 	"net/http"
 	"strconv"
@@ -37,6 +36,8 @@ func (sh ShortenerHandler) ServeHTTP(res http.ResponseWriter, req *http.Request)
 
 	if req.Method == http.MethodGet {
 		responseMessage, _ = FindURL(req.URL.EscapedPath()[1:])
+		fmt.Println(req.URL)
+		fmt.Println(responseMessage)
 		http.Redirect(res, req, responseMessage, http.StatusTemporaryRedirect)
 	}
 
@@ -46,23 +47,16 @@ func (sh ShortenerHandler) ServeHTTP(res http.ResponseWriter, req *http.Request)
 	}
 }
 
-func AddURL(Data string) (shortURL string) {
-	if Urls == nil {
-		Urls = make(map[string]string)
-	}
-	h := fnv.New32()
-	h.Write([]byte(Data))
-	shortURL = hex.EncodeToString(h.Sum(nil))
-	Urls[shortURL] = Data
-	fmt.Println(Urls)
+func AddURL(Url string) (shortURL string) {
+	cs := storage.CringeStorage{}
+	shortURL = cs.Store(Url)
 	return
 }
 
 func FindURL(shorURL string) (string, error) {
-	if Urls == nil {
-		Urls = make(map[string]string)
-	}
-	return Urls[shorURL], nil
+	cs := storage.CringeStorage{}
+	result, _ := cs.FindByID(shorURL)
+	return result, nil
 }
 
 func main() {
