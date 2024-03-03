@@ -1,23 +1,35 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
+	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
 	"github.com/stretchr/testify/assert"
+	"hash/fnv"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
-func TestAddURL(t *testing.T) {
-	// описываем ожидаемое тело ответа при успешном запросе
-	//successBody := `{
-	//    "response": {
-	//        "text": "Извините, я пока ничего не умею"
-	//    },
-	//    "version": "1.0"
-	//}`
+type RepositoryMock struct {
+	State map[string]string
+}
 
+func (rm *RepositoryMock) Store(Data string) (ID string) {
+	h := fnv.New32()
+	h.Write([]byte(Data))
+	ID = hex.EncodeToString(h.Sum(nil))
+	rm.State[ID] = Data
+	return ID
+}
+
+func (rm *RepositoryMock) FindByID(ID string) (Data string, err error) {
+	Data = rm.State[ID]
+	return Data, nil
+}
+
+func TestAddURL(t *testing.T) {
 	// описываем набор данных: метод запроса, ожидаемый код ответа, ожидаемое тело
 	testCases := []struct {
 		method       string
@@ -28,6 +40,7 @@ func TestAddURL(t *testing.T) {
 	}{
 		{method: http.MethodPost, path: "/", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusCreated, expectedBody: "http://localhost:8080/2187b119"},
 		{method: http.MethodGet, path: "/2187b119", requestBody: "", expectedCode: http.StatusTemporaryRedirect, expectedBody: ""},
+		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.kz/", expectedCode: http.StatusBadRequest, expectedBody: ""},
 	}
 
 	for _, tc := range testCases {
@@ -37,8 +50,8 @@ func TestAddURL(t *testing.T) {
 				r = httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.requestBody))
 			}
 			w := httptest.NewRecorder()
-			sh := ShortenerHandler{}
-			// вызовем хендлер как обычную функцию, без запуска самого сервера
+			rm := RepositoryMock{State: map[string]string{"2187b119": "https://practicum.yandex.ru/"}}
+			sh := server.Server{Storage: &rm}
 			sh.ServeHTTP(w, r)
 
 			assert.Equal(t, tc.expectedCode, w.Code, "Код ответа не совпадает с ожидаемым")
