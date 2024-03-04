@@ -51,7 +51,7 @@ func TestAddURL(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 			rm := RepositoryMock{State: map[string]string{"2187b119": "https://practicum.yandex.ru/"}}
-			sh := server.Server{Storage: &rm}
+			sh := server.NewServer(&rm)
 			sh.ServeHTTP(w, r)
 
 			assert.Equal(t, tc.expectedCode, w.Code, "Код ответа не совпадает с ожидаемым")
