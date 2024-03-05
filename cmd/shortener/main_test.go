@@ -43,8 +43,6 @@ func TestAddURL(t *testing.T) {
 		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.kz/", expectedCode: http.StatusBadRequest, expectedBody: ""},
 	}
 
-	parseFlags()
-
 	for _, tc := range testCases {
 		t.Run(tc.method, func(t *testing.T) {
 			r := httptest.NewRequest(tc.method, tc.path, nil)

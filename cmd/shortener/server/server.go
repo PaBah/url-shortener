@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/PaBah/url-shortener.git/cmd/shortener/config"
 	"github.com/PaBah/url-shortener.git/cmd/shortener/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -29,7 +28,7 @@ func postURLHandle(store *storage.Repository) http.HandlerFunc {
 		}
 
 		shortURL := (*store).Store(string(body))
-		shortenedURL := fmt.Sprintf("%s/%s", config.Settings.ShortURLHost, shortURL)
+		shortenedURL := fmt.Sprintf("http://localhost:8080/%s", shortURL)
 		res.Header().Set("Content-Type", "")
 		res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
 		res.WriteHeader(http.StatusCreated)
