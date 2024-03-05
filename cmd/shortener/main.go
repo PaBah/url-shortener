@@ -9,5 +9,5 @@ import (
 func main() {
 	cs := storage.CringeStorage{}
 	newServer := server.NewServer(&cs)
-	http.ListenAndServe(":8080", newServer)
+	http.ListenAndServe(":8080", *newServer)
 }
