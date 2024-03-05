@@ -1,6 +1,6 @@
 package config
 
 var Settings struct {
-	ServerHost   string
-	ShortURLHost string
+	ServerAddress string
+	BaseURL       string
 }
