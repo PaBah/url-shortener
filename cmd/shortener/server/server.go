@@ -29,7 +29,7 @@ func postURLHandle(store *storage.Repository) http.HandlerFunc {
 		}
 
 		shortURL := (*store).Store(string(body))
-		shortenedURL := fmt.Sprintf("%s/%s", config.Settings.BaseURL, shortURL)
+		shortenedURL := fmt.Sprintf("%s/%s", config.Settings.ShortURLHost, shortURL)
 		res.Header().Set("Content-Type", "")
 		res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
 		res.WriteHeader(http.StatusCreated)
