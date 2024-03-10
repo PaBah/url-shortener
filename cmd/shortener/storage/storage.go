@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/hex"
+	"github.com/PaBah/url-shortener.git/cmd/shortener/config"
 	"hash/fnv"
 	"os"
 )
@@ -13,11 +14,11 @@ type Repository interface {
 	FindByID(string) (string, error)
 }
 
-type CringeStorage struct {
+type InFileStorage struct {
 	state map[string]string
 }
 
-func (cs *CringeStorage) Store(Data string) (ID string) {
+func (cs *InFileStorage) Store(Data string) (ID string) {
 	cs.loadState()
 	ID = cs.buildID(Data)
 	cs.state[ID] = Data
@@ -25,13 +26,13 @@ func (cs *CringeStorage) Store(Data string) (ID string) {
 	return
 }
 
-func (cs *CringeStorage) FindByID(ID string) (Data string, err error) {
+func (cs *InFileStorage) FindByID(ID string) (Data string, err error) {
 	cs.loadState()
 	Data = cs.state[ID]
 	return Data, nil
 }
 
-func (cs *CringeStorage) loadState() {
+func (cs *InFileStorage) loadState() {
 	dat, err := os.ReadFile("./.store")
 	if err != nil {
 		cs.state = make(map[string]string)
@@ -48,16 +49,16 @@ func (cs *CringeStorage) loadState() {
 	cs.state = decodedState
 }
 
-func (cs *CringeStorage) saveState() {
-	b := new(bytes.Buffer)
+func (cs *InFileStorage) saveState() {
+	b := &bytes.Buffer{}
 
 	e := gob.NewEncoder(b)
 	e.Encode(cs.state)
 
-	os.WriteFile("./.store", b.Bytes(), 0644)
+	os.WriteFile(config.StoragePath, b.Bytes(), 0644)
 }
 
-func (cs *CringeStorage) buildID(Value string) (ID string) {
+func (cs *InFileStorage) buildID(Value string) (ID string) {
 	h := fnv.New32()
 	h.Write([]byte(Value))
 	ID = hex.EncodeToString(h.Sum(nil))

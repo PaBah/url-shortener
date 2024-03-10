@@ -1,6 +1,8 @@
 package config
 
-var Settings struct {
+var Options struct {
 	ServerAddress string
 	BaseURL       string
 }
+
+const StoragePath = "./.store"

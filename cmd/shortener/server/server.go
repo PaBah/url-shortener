@@ -10,7 +10,9 @@ import (
 	"strconv"
 )
 
-func getShortURLHandle(store *storage.Repository) http.HandlerFunc {
+type Server struct{}
+
+func (s Server) getShortURLHandle(store *storage.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		shortID := chi.URLParam(req, "id")
 		responseMessage, _ := (*store).FindByID(shortID)
@@ -18,7 +20,7 @@ func getShortURLHandle(store *storage.Repository) http.HandlerFunc {
 	}
 }
 
-func postURLHandle(store *storage.Repository) http.HandlerFunc {
+func (s Server) postURLHandle(store *storage.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var responseMessage string
 
@@ -29,7 +31,7 @@ func postURLHandle(store *storage.Repository) http.HandlerFunc {
 		}
 
 		shortURL := (*store).Store(string(body))
-		shortenedURL := fmt.Sprintf("%s/%s", config.Settings.BaseURL, shortURL)
+		shortenedURL := fmt.Sprintf("%s/%s", config.Options.BaseURL, shortURL)
 		res.Header().Set("Content-Type", "")
 		res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
 		res.WriteHeader(http.StatusCreated)
@@ -40,8 +42,9 @@ func postURLHandle(store *storage.Repository) http.HandlerFunc {
 
 func NewServer(storage storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
-	r.Post("/", postURLHandle(&storage))
-	r.Get("/{id}", getShortURLHandle(&storage))
+	s := Server{}
+	r.Post("/", s.postURLHandle(&storage))
+	r.Get("/{id}", s.getShortURLHandle(&storage))
 	r.MethodNotAllowed(func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusBadRequest)
 	})
