@@ -33,7 +33,7 @@ func (cs *InFileStorage) FindByID(ID string) (Data string, err error) {
 }
 
 func (cs *InFileStorage) loadState() {
-	dat, err := os.ReadFile("./.store")
+	dat, err := os.ReadFile(config.StoragePath)
 	if err != nil {
 		cs.state = make(map[string]string)
 		return
