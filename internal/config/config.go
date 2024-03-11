@@ -1,6 +1,6 @@
 package config
 
-var Options struct {
+type Options struct {
 	ServerAddress string
 	BaseURL       string
 }

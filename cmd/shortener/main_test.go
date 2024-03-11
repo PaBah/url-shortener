@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
-	"github.com/PaBah/url-shortener.git/cmd/shortener/storage"
+	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"net/http"
@@ -25,11 +26,14 @@ func TestAddURL(t *testing.T) {
 		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusBadRequest, expectedBody: ""},
 	}
 
-	parseFlags()
+	options := &config.Options{}
+	ParseFlags(options)
 
 	ctrl := gomock.NewController(t)
-
+	var store storage.Repository
 	rm := storage.NewMockRepository(ctrl)
+	store = rm
+
 	rm.
 		EXPECT().
 		Store(gomock.Eq("https://practicum.yandex.ru/")).
@@ -49,7 +53,7 @@ func TestAddURL(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			sh := server.NewServer(rm)
+			sh := server.NewRouter(options, &store)
 			sh.ServeHTTP(w, r)
 
 			assert.Equal(t, tc.expectedCode, w.Code, "Код ответа не совпадает с ожидаемым")
