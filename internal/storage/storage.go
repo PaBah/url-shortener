@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/hex"
+	"fmt"
 	"hash/fnv"
 )
 
@@ -29,7 +30,11 @@ func (cs *InFileStorage) FindByID(ID string) (Data string, err error) {
 		cs.state = make(map[string]string)
 	}
 
-	Data = cs.state[ID]
+	Data, found := cs.state[ID]
+	if !found {
+		return Data, fmt.Errorf("no value with such ID")
+	}
+
 	return Data, nil
 }
 

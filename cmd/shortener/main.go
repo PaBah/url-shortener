@@ -17,6 +17,11 @@ func main() {
 	store = &inFileStore
 
 	newServer := server.NewRouter(options, &store)
-	fmt.Printf("Running server on [%s]\n", options.ServerAddress)
-	http.ListenAndServe(options.ServerAddress, newServer)
+
+	fmt.Printf("Start server on [%s]\n", options.ServerAddress)
+	err := http.ListenAndServe(options.ServerAddress, newServer)
+
+	if err != nil {
+		fmt.Printf("Server crashed with error: %s", err)
+	}
 }

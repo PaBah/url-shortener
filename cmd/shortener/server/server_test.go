@@ -1,7 +1,6 @@
-package main
+package server
 
 import (
-	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestAddURL(t *testing.T) {
+func TestServer(t *testing.T) {
 	// описываем набор данных: метод запроса, ожидаемый код ответа, ожидаемое тело
 	testCases := []struct {
 		method       string
@@ -26,8 +25,10 @@ func TestAddURL(t *testing.T) {
 		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusBadRequest, expectedBody: ""},
 	}
 
-	options := &config.Options{}
-	ParseFlags(options)
+	options := &config.Options{
+		ServerAddress: ":8080",
+		BaseURL:       "http://localhost:8080",
+	}
 
 	ctrl := gomock.NewController(t)
 	var store storage.Repository
@@ -53,7 +54,7 @@ func TestAddURL(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			sh := server.NewRouter(options, &store)
+			sh := NewRouter(options, &store)
 			sh.ServeHTTP(w, r)
 
 			assert.Equal(t, tc.expectedCode, w.Code, "Код ответа не совпадает с ожидаемым")
