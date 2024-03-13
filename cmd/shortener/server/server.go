@@ -22,12 +22,9 @@ func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
-	var responseMessage []byte
-
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
-		responseMessage = []byte("Invalid body")
 	}
 
 	shortURL := (*s.storage).Store(string(body))
@@ -35,8 +32,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
 	res.WriteHeader(http.StatusCreated)
-	responseMessage = []byte(shortenedURL)
-	_, err = res.Write(responseMessage)
+	_, err = res.Write([]byte(shortenedURL))
 	if err != nil {
 		fmt.Printf("Can not send response from postURLHandle: %s", err)
 	}
