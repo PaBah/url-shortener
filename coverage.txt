@@ -1,6 +1,0 @@
-mode: atomic
-github.com/PaBah/url-shortener.git/cmd/shortener/flags.go:9.42,17.15 7 1
-github.com/PaBah/url-shortener.git/cmd/shortener/flags.go:17.15,19.3 1 0
-github.com/PaBah/url-shortener.git/cmd/shortener/flags.go:21.2,22.15 2 1
-github.com/PaBah/url-shortener.git/cmd/shortener/flags.go:22.15,24.3 1 0
-github.com/PaBah/url-shortener.git/cmd/shortener/main.go:11.13,22.2 8 0
