@@ -38,6 +38,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// NewRouter Creates router
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
 
