@@ -30,7 +30,7 @@ func TestInFileStorage_FindByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InFileStorage{
+			cs := &InMemoryStorage{
 				state: tt.state,
 			}
 			gotData, err := cs.FindByID(tt.ID)
@@ -66,7 +66,7 @@ func TestInFileStorage_Store(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InFileStorage{
+			cs := &InMemoryStorage{
 				state: tt.state,
 			}
 			cs.Store(tt.value)
@@ -89,7 +89,7 @@ func TestInFileStorage_buildID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InFileStorage{}
+			cs := &InMemoryStorage{}
 			assert.Equal(t, cs.buildID(tt.value), tt.wantValue, "Сгенерированный и ожидаемый ID не совпадают")
 		})
 	}

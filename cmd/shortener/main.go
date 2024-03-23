@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
 	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -12,16 +14,22 @@ func main() {
 	options := &config.Options{}
 	ParseFlags(options)
 
+	if err := logger.Initialize(options.LogsLevel); err != nil {
+		fmt.Printf("Logger can not be initialized %s", err)
+		return
+	}
+
 	var store storage.Repository
-	inFileStore := storage.InFileStorage{}
+	inFileStore := storage.InMemoryStorage{}
 	store = &inFileStore
 
 	newServer := server.NewRouter(options, &store)
 
-	fmt.Printf("Start server on [%s]\n", options.ServerAddress)
+	logger.Log.Info("Start server on", zap.String("address", options.ServerAddress))
+
 	err := http.ListenAndServe(options.ServerAddress, newServer)
 
 	if err != nil {
-		fmt.Printf("Server crashed with error: %s", err)
+		logger.Log.Error("Server crashed with error: ", zap.Error(err))
 	}
 }
