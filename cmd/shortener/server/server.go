@@ -56,7 +56,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
 	}
 
-	res.Header().Set("Content-Type", "")
+	res.Header().Set("Content-Type", "application/json")
 	response, err := json.Marshal(responseData)
 	res.Header().Set("Content-Length", strconv.Itoa(len(response)))
 	res.WriteHeader(http.StatusCreated)
