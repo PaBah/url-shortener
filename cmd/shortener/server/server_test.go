@@ -22,7 +22,9 @@ func TestServer(t *testing.T) {
 	}{
 		{method: http.MethodPost, path: "/", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusCreated, expectedBody: "http://localhost:8080/2187b119"},
 		{method: http.MethodGet, path: "/2187b119", requestBody: "", expectedCode: http.StatusTemporaryRedirect, expectedBody: ""},
+		{method: http.MethodGet, path: "/2a49568d", requestBody: "", expectedCode: http.StatusTemporaryRedirect, expectedBody: ""},
 		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusBadRequest, expectedBody: ""},
+		{method: http.MethodPost, path: "/api/shorten", requestBody: `{"url": "https://practicum.yandex.kz/"}`, expectedCode: http.StatusCreated, expectedBody: `{"result":"http://localhost:8080/2a49568d"}`},
 	}
 
 	options := &config.Options{
@@ -44,6 +46,16 @@ func TestServer(t *testing.T) {
 		EXPECT().
 		FindByID("2187b119").
 		Return("https://practicum.yandex.ru/", nil).
+		AnyTimes()
+	rm.
+		EXPECT().
+		Store(gomock.Eq("https://practicum.yandex.kz/")).
+		Return("2a49568d").
+		AnyTimes()
+	rm.
+		EXPECT().
+		FindByID("2a49568d").
+		Return("https://practicum.yandex.kz/", nil).
 		AnyTimes()
 
 	for _, tc := range testCases {

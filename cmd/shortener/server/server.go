@@ -1,11 +1,14 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/logger"
+	"github.com/PaBah/url-shortener.git/internal/schemas"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
@@ -39,6 +42,30 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+	}
+
+	requestData := &schemas.APIShortenRequestSchema{}
+	err = json.Unmarshal(body, requestData)
+
+	shortURL := (*s.storage).Store(requestData.URL)
+	responseData := schemas.APIShortenResponseSchema{
+		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
+	}
+
+	res.Header().Set("Content-Type", "")
+	response, err := json.Marshal(responseData)
+	res.Header().Set("Content-Length", strconv.Itoa(len(response)))
+	res.WriteHeader(http.StatusCreated)
+	_, err = res.Write(response)
+	if err != nil {
+		logger.Log.Error("Can not send response from postURLHandle:", zap.Error(err))
+	}
+}
+
 // NewRouter Creates router
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
@@ -50,6 +77,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 
 	r.Post("/", logger.RequestLogger(s.postURLHandle))
 	r.Get("/{id}", logger.RequestLogger(s.getShortURLHandle))
+	r.Post("/api/shorten", logger.RequestLogger(s.apiShortenHandle))
 	r.MethodNotAllowed(
 		logger.RequestLogger(
 			func(writer http.ResponseWriter, request *http.Request) {
