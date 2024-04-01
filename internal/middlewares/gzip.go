@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -25,7 +26,11 @@ func (c *compressWriter) Header() http.Header {
 }
 
 func (c *compressWriter) Write(p []byte) (int, error) {
-	return c.zipWriter.Write(p)
+	written, err := c.zipWriter.Write(p)
+	if err == nil {
+		c.Header().Set("Content-Length", strconv.Itoa(written))
+	}
+	return written, err
 }
 
 func (c *compressWriter) WriteHeader(statusCode int) {

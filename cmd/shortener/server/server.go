@@ -62,11 +62,11 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Content-Type", "application/json")
 	response, err := json.Marshal(responseData)
+
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 	}
 
-	res.Header().Set("Content-Length", strconv.Itoa(len(response)))
 	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write(response)
 	if err != nil {
@@ -86,6 +86,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r.Post("/", logger.RequestLogger(middlewares.GzipMiddleware(s.postURLHandle)))
 	r.Get("/{id}", logger.RequestLogger(middlewares.GzipMiddleware(s.getShortURLHandle)))
 	r.Post("/api/shorten", logger.RequestLogger(middlewares.GzipMiddleware(s.apiShortenHandle)))
+	//r.Post("/api/shorten", middlewares.GzipMiddleware(s.apiShortenHandle))
 	r.MethodNotAllowed(
 		logger.RequestLogger(
 			middlewares.GzipMiddleware(
