@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/logger"
-	"github.com/PaBah/url-shortener.git/internal/middlewares"
 	"github.com/PaBah/url-shortener.git/internal/schemas"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -83,13 +82,12 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		storage: storage,
 	}
 
-	r.Post("/", logger.RequestLogger(middlewares.GzipMiddleware(s.postURLHandle)))
-	r.Get("/{id}", logger.RequestLogger(middlewares.GzipMiddleware(s.getShortURLHandle)))
-	r.Post("/api/shorten", logger.RequestLogger(middlewares.GzipMiddleware(s.apiShortenHandle)))
-	//r.Post("/api/shorten", middlewares.GzipMiddleware(s.apiShortenHandle))
+	r.Post("/", logger.RequestLogger(GzipMiddleware(s.postURLHandle)))
+	r.Get("/{id}", logger.RequestLogger(GzipMiddleware(s.getShortURLHandle)))
+	r.Post("/api/shorten", logger.RequestLogger(GzipMiddleware(s.apiShortenHandle)))
 	r.MethodNotAllowed(
 		logger.RequestLogger(
-			middlewares.GzipMiddleware(
+			GzipMiddleware(
 				func(writer http.ResponseWriter, request *http.Request) {
 					writer.WriteHeader(http.StatusBadRequest)
 				},

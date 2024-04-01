@@ -1,4 +1,4 @@
-package middlewares
+package server
 
 import (
 	"compress/gzip"
@@ -90,7 +90,7 @@ func GzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 
 		contentEncoding := r.Header.Get("Content-Encoding")
 		sendsGzip := strings.Contains(contentEncoding, "gzip")
-		if sendsGzip && supportsGzip {
+		if gzipReasonable && sendsGzip {
 			compressReader, err := newCompressReader(r.Body)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
