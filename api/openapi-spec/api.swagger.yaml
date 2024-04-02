@@ -1,0 +1,71 @@
+openapi: 3.0.0
+info:
+  version: 0.2.0
+  title: URL Shortener API
+  description: A sample API of service which can shorten URLs
+servers:
+  - url: http://localhost:8080
+paths:
+  /:
+    post:
+      summary: Create shortened URL for send data
+      description: Receive data, build for it short URL and send in response
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: https://practicum.yandex.kz/
+      responses:
+        '201':
+          description: Short URL successfully created
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: http://localhost:8080/2a49568d
+        '400':
+          description: Bad request
+  /{shortenedUrlUUID}:
+    get:
+      summary: Process shortened URL to original one propose
+      description: Seek in Storage record with UUID `shortenedUrlUUID` and redirect to original URL
+      parameters:
+        - in: path
+          name: shortenedUrlUUID
+          schema:
+            type: string
+          required: true
+      responses:
+        '307':
+          description: Redirected to original URL
+        '400':
+          description: Bad request
+  /api/shorten:
+    post:
+      summary: Create shortened URL for send data
+      description: Receive data, build for it short URL and send in response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  example: https://practicum.yandex.kz/
+      responses:
+        '201':
+          description: Short URL successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: http://localhost:8080/2a49568d
+        '400':
+          description: Bad request
