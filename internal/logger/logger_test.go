@@ -64,6 +64,6 @@ func TestLoggerWork(t *testing.T) {
 	writer.Flush()
 
 	var logRecord LogRecord
-	err = json.NewDecoder(bytes.NewReader(buffer.Bytes()[60:])).Decode(&logRecord)
+	_ = json.NewDecoder(bytes.NewReader(buffer.Bytes()[60:])).Decode(&logRecord)
 	require.Equal(t, expectedLog, logRecord)
 }
