@@ -66,7 +66,9 @@ func TestLoggerWork(t *testing.T) {
 	require.JSONEq(t, testMessage, string(b))
 	writer.Flush()
 
-	var logRecord LogRecord
-	_ = json.NewDecoder(bytes.NewReader(buffer.Bytes()[60:])).Decode(&logRecord)
-	require.Equal(t, expectedLog, logRecord)
+	var logRecord *LogRecord
+	megaCrack := buffer.Bytes()[60:]
+	fmt.Println(megaCrack)
+	_ = json.NewDecoder(bytes.NewReader(megaCrack)).Decode(&logRecord)
+	require.Equal(t, expectedLog, *logRecord)
 }
