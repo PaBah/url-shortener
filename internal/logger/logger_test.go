@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -67,8 +68,9 @@ func TestLoggerWork(t *testing.T) {
 	writer.Flush()
 
 	var logRecord *LogRecord
-	megaCrack := buffer.String()[60:]
-	fmt.Println(megaCrack)
-	_ = json.NewDecoder(bytes.NewReader(buffer.Bytes())).Decode(&logRecord)
+	logData := buffer.String()
+	logData = logData[strings.Index(logData, "{"):]
+
+	_ = json.NewDecoder(bytes.NewReader([]byte(logData))).Decode(&logRecord)
 	require.Equal(t, expectedLog, *logRecord)
 }
