@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -26,15 +27,17 @@ func TestLoggerWork(t *testing.T) {
 	handler := RequestLogger(func(res http.ResponseWriter, req *http.Request) {
 		res.Header().Set("Content-Type", "application/json")
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(testMessage))
+		amount, _ := res.Write([]byte(testMessage))
+		fmt.Println(amount)
 	})
+
 	expectedLog := LogRecord{
 		URI:    "/",
 		Method: "GET",
 		Status: 200,
 		Size:   18,
 	}
-	_ = Initialize("debug")
+	//_ = Initialize("debug")
 	var buffer bytes.Buffer
 	encoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 	writer := bufio.NewWriter(&buffer)
