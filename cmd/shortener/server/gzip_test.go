@@ -21,10 +21,9 @@ func TestGzipCompression(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	var store storage.Repository
-	rm := storage.NewMockRepository(ctrl)
+	rm := NewMockRepository(ctrl)
 
 	store = rm
-
 	rm.
 		EXPECT().
 		Store(gomock.Eq("https://practicum.yandex.ru/")).

@@ -34,7 +34,7 @@ func TestServer(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	var store storage.Repository
-	rm := storage.NewMockRepository(ctrl)
+	rm := NewMockRepository(ctrl)
 	store = rm
 
 	rm.

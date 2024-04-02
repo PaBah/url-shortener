@@ -2,8 +2,12 @@ package storage
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"github.com/PaBah/url-shortener.git/internal/models"
 	"hash/fnv"
+	"io"
+	"os"
 )
 
 type Repository interface {
@@ -11,26 +15,32 @@ type Repository interface {
 	FindByID(string) (string, error)
 }
 
-type InMemoryStorage struct {
+type InFileStorage struct {
 	state map[string]string
+	file  *os.File
 }
 
-func (cs *InMemoryStorage) Store(Data string) (ID string) {
-	if cs.state == nil {
-		cs.state = make(map[string]string)
+func (fs *InFileStorage) Store(Data string) (ID string) {
+	if fs.state == nil {
+		fs.state = make(map[string]string)
 	}
 
-	ID = cs.buildID(Data)
-	cs.state[ID] = Data
+	ID = fs.buildID(Data)
+	prevStateLen := len(fs.state)
+	fs.state[ID] = Data
+	if prevStateLen < len(fs.state) {
+		_ = fs.writeToFile(&models.ShortenURL{UUID: ID, OriginalURL: Data})
+	}
+
 	return
 }
 
-func (cs *InMemoryStorage) FindByID(ID string) (Data string, err error) {
-	if cs.state == nil {
-		cs.state = make(map[string]string)
+func (fs *InFileStorage) FindByID(ID string) (Data string, err error) {
+	if fs.state == nil {
+		fs.state = make(map[string]string)
 	}
 
-	Data, found := cs.state[ID]
+	Data, found := fs.state[ID]
 	if !found {
 		return Data, fmt.Errorf("no value with such ID")
 	}
@@ -38,9 +48,41 @@ func (cs *InMemoryStorage) FindByID(ID string) (Data string, err error) {
 	return Data, nil
 }
 
-func (cs *InMemoryStorage) buildID(Value string) (ID string) {
+func (fs *InFileStorage) buildID(Value string) (ID string) {
 	h := fnv.New32()
 	h.Write([]byte(Value))
 	ID = hex.EncodeToString(h.Sum(nil))
 	return
+}
+
+func (fs *InFileStorage) init(filePath string) {
+	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+
+	if fs.state == nil {
+		fs.state = make(map[string]string)
+	}
+
+	decoder := json.NewDecoder(fs.file)
+	shortURLRecord := &models.ShortenURL{}
+	for {
+		if err := decoder.Decode(&shortURLRecord); err == io.EOF {
+			break
+		}
+		fs.state[shortURLRecord.UUID] = shortURLRecord.OriginalURL
+	}
+}
+
+func (fs *InFileStorage) writeToFile(shortenURL *models.ShortenURL) error {
+	writer := json.NewEncoder(fs.file)
+	return writer.Encode(&shortenURL)
+}
+
+func (fs *InFileStorage) Close() error {
+	return fs.file.Close()
+}
+
+func NewInFileStorage(filePath string) *InFileStorage {
+	store := &InFileStorage{}
+	store.init(filePath)
+	return store
 }

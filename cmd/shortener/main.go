@@ -20,9 +20,10 @@ func main() {
 	}
 
 	var store storage.Repository
-	inFileStore := storage.InMemoryStorage{}
-	store = &inFileStore
+	inFileStore := storage.NewInFileStorage(options.FileStoragePath)
+	defer inFileStore.Close()
 
+	store = inFileStore
 	newServer := server.NewRouter(options, &store)
 
 	logger.Log.Info("Start server on", zap.String("address", options.ServerAddress))
