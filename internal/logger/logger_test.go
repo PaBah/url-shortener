@@ -67,8 +67,8 @@ func TestLoggerWork(t *testing.T) {
 	writer.Flush()
 
 	var logRecord *LogRecord
-	megaCrack := buffer.Bytes()[60:]
+	megaCrack := buffer.String()[60:]
 	fmt.Println(megaCrack)
-	_ = json.NewDecoder(bytes.NewReader(megaCrack)).Decode(&logRecord)
+	_ = json.NewDecoder(bytes.NewReader(buffer.Bytes())).Decode(&logRecord)
 	require.Equal(t, expectedLog, *logRecord)
 }
