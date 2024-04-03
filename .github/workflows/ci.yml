@@ -19,6 +19,6 @@ jobs:
         env:
           GO111MODULE: 'auto'
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4-beta
+        uses: codecov/codecov-action@v4.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
