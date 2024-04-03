@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"github.com/PaBah/url-shortener.git/internal/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -25,12 +25,7 @@ func TestLoggerWork(t *testing.T) {
 		Size   int    `json:"size"`
 	}
 
-	handler := RequestLogger(func(res http.ResponseWriter, req *http.Request) {
-		res.Header().Set("Content-Type", "application/json")
-		res.WriteHeader(http.StatusOK)
-		amount, _ := res.Write([]byte(testMessage))
-		fmt.Println(amount)
-	})
+	handler := RequestLogger(mock.NewHandlerMock(testMessage, http.StatusOK))
 
 	expectedLog := LogRecord{
 		URI:    "/",

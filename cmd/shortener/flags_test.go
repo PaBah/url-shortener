@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/PaBah/url-shortener.git/internal/config"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseFlags(t *testing.T) {

@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/PaBah/url-shortener.git/internal/config"
 	"os"
+
+	"github.com/PaBah/url-shortener.git/internal/config"
 )
 
 func ParseFlags(options *config.Options) {

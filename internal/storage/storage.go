@@ -4,10 +4,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/PaBah/url-shortener.git/internal/models"
 	"hash/fnv"
 	"io"
 	"os"
+
+	"github.com/PaBah/url-shortener.git/internal/models"
 )
 
 type Repository interface {
@@ -21,7 +22,7 @@ type InFileStorage struct {
 }
 
 func (fs *InFileStorage) Store(Data string) (ID string) {
-	if fs.state == nil {
+	if len(fs.state) == 0 {
 		fs.state = make(map[string]string)
 	}
 
@@ -81,8 +82,8 @@ func (fs *InFileStorage) Close() error {
 	return fs.file.Close()
 }
 
-func NewInFileStorage(filePath string) *InFileStorage {
-	store := &InFileStorage{}
+func NewInFileStorage(filePath string) InFileStorage {
+	store := InFileStorage{}
 	store.init(filePath)
 	return store
 }

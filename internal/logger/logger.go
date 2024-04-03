@@ -49,7 +49,7 @@ func Initialize(level string) error {
 }
 
 // RequestLogger — middleware-логер для входящих HTTP-запросов.
-func RequestLogger(h http.HandlerFunc) http.HandlerFunc {
+func RequestLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -61,7 +61,7 @@ func RequestLogger(h http.HandlerFunc) http.HandlerFunc {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
-		h(&lw, r)
+		h.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
 

@@ -1,4 +1,4 @@
-package server
+package middlewares
 
 import (
 	"compress/gzip"
@@ -74,8 +74,8 @@ func (c *compressReader) Close() error {
 	return c.zipReader.Close()
 }
 
-func GzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GzipMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		originalWriter := w
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
@@ -101,5 +101,5 @@ func GzipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		h.ServeHTTP(originalWriter, r)
-	}
+	})
 }

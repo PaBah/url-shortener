@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"fmt"
-	"github.com/PaBah/url-shortener.git/internal/models"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/PaBah/url-shortener.git/internal/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInFileStorage_FindByID(t *testing.T) {
@@ -108,7 +108,6 @@ func TestWorkWithFile(t *testing.T) {
 
 	fs.state = nil
 	fs.init("/tmp/.test_store")
-	fmt.Println(fs.state)
 
 	assert.Equal(t, fs.state, map[string]string{"test": "test"}, "data had been read with error")
 	_ = os.Remove("/tmp/.test_store")

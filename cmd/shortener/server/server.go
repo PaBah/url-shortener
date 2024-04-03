@@ -3,15 +3,17 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PaBah/url-shortener.git/internal/config"
-	"github.com/PaBah/url-shortener.git/internal/logger"
-	"github.com/PaBah/url-shortener.git/internal/schemas"
-	"github.com/PaBah/url-shortener.git/internal/storage"
-	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/PaBah/url-shortener.git/internal/dto"
+	"github.com/PaBah/url-shortener.git/internal/logger"
+	"github.com/PaBah/url-shortener.git/internal/middlewares"
+	"github.com/PaBah/url-shortener.git/internal/storage"
+	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -28,7 +30,8 @@ func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	shortURL := (*s.storage).Store(string(body))
@@ -38,24 +41,28 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write([]byte(shortenedURL))
 	if err != nil {
-		fmt.Printf("Can not send response from postURLHandle: %s", err)
+		logger.Log.Error("Can not send response from postURLHandle:", zap.Error(err))
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
 func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	requestData := &schemas.APIShortenRequestSchema{}
+	requestData := &dto.ShortenRequest{}
 	err = json.Unmarshal(body, requestData)
 	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	shortURL := (*s.storage).Store(requestData.URL)
-	responseData := schemas.APIShortenResponseSchema{
+	responseData := dto.ShortenResponse{
 		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
 	}
 
@@ -63,13 +70,16 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 	response, err := json.Marshal(responseData)
 
 	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write(response)
 	if err != nil {
-		logger.Log.Error("Can not send response from postURLHandle:", zap.Error(err))
+		logger.Log.Error("Can not send response from apiShortenHandle:", zap.Error(err))
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -81,18 +91,16 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		options: options,
 		storage: storage,
 	}
+	r.Use(middlewares.GzipMiddleware)
+	r.Use(logger.RequestLogger)
 
-	r.Post("/", logger.RequestLogger(GzipMiddleware(s.postURLHandle)))
-	r.Get("/{id}", logger.RequestLogger(GzipMiddleware(s.getShortURLHandle)))
-	r.Post("/api/shorten", logger.RequestLogger(GzipMiddleware(s.apiShortenHandle)))
+	r.Post("/", s.postURLHandle)
+	r.Get("/{id}", s.getShortURLHandle)
+	r.Post("/api/shorten", s.apiShortenHandle)
 	r.MethodNotAllowed(
-		logger.RequestLogger(
-			GzipMiddleware(
-				func(writer http.ResponseWriter, request *http.Request) {
-					writer.WriteHeader(http.StatusBadRequest)
-				},
-			),
-		),
+		func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusBadRequest)
+		},
 	)
 	return r
 }

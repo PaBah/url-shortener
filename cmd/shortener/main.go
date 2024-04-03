@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 func main() {
@@ -23,7 +24,7 @@ func main() {
 	inFileStore := storage.NewInFileStorage(options.FileStoragePath)
 	defer inFileStore.Close()
 
-	store = inFileStore
+	store = &inFileStore
 	newServer := server.NewRouter(options, &store)
 
 	logger.Log.Info("Start server on", zap.String("address", options.ServerAddress))
