@@ -41,7 +41,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write([]byte(shortenedURL))
 	if err != nil {
-		logger.Log.Error("Can not send response from postURLHandle:", zap.Error(err))
+		logger.Log().Error("Can not send response from postURLHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -77,7 +77,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write(response)
 	if err != nil {
-		logger.Log.Error("Can not send response from apiShortenHandle:", zap.Error(err))
+		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -92,7 +92,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		storage: storage,
 	}
 	r.Use(middlewares.GzipMiddleware)
-	r.Use(logger.RequestLogger)
+	r.Use(logger.LoggerMiddleware)
 
 	r.Post("/", s.postURLHandle)
 	r.Get("/{id}", s.getShortURLHandle)

@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -102,8 +101,9 @@ func TestWorkWithFile(t *testing.T) {
 	fs := NewInFileStorage("/tmp/.test_store")
 	defer fs.Close()
 
-	writtenRecord := models.ShortenURL{UUID: "test", OriginalURL: "test"}
-	err := fs.writeToFile(&writtenRecord)
+	fs.state = map[string]string{"test": "test"}
+
+	err := fs.writeBackup()
 	assert.NoError(t, err, "data had been written with error")
 
 	fs.state = nil

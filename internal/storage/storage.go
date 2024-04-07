@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"os"
 
+	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/models"
+	"go.uber.org/zap"
 )
 
 type Repository interface {
@@ -27,11 +28,7 @@ func (fs *InFileStorage) Store(Data string) (ID string) {
 	}
 
 	ID = fs.buildID(Data)
-	prevStateLen := len(fs.state)
 	fs.state[ID] = Data
-	if prevStateLen < len(fs.state) {
-		_ = fs.writeToFile(&models.ShortenURL{UUID: ID, OriginalURL: Data})
-	}
 
 	return
 }
@@ -57,28 +54,41 @@ func (fs *InFileStorage) buildID(Value string) (ID string) {
 }
 
 func (fs *InFileStorage) init(filePath string) {
-	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 
-	if fs.state == nil {
-		fs.state = make(map[string]string)
-	}
+	fs.state = map[string]string{}
 
 	decoder := json.NewDecoder(fs.file)
 	shortURLRecord := &models.ShortenURL{}
 	for {
-		if err := decoder.Decode(&shortURLRecord); err == io.EOF {
+		if err := decoder.Decode(&shortURLRecord); err != nil {
+
 			break
 		}
 		fs.state[shortURLRecord.UUID] = shortURLRecord.OriginalURL
 	}
 }
 
-func (fs *InFileStorage) writeToFile(shortenURL *models.ShortenURL) error {
+func (fs *InFileStorage) writeBackup() error {
 	writer := json.NewEncoder(fs.file)
-	return writer.Encode(&shortenURL)
+	for k, v := range fs.state {
+		shortenURL := models.ShortenURL{
+			UUID:        k,
+			OriginalURL: v,
+		}
+		err := writer.Encode(&shortenURL)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (fs *InFileStorage) Close() error {
+	err := fs.writeBackup()
+	if err != nil {
+		logger.Log().Error("can not write backup file", zap.Error(err))
+	}
 	return fs.file.Close()
 }
 

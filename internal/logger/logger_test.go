@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"github.com/PaBah/url-shortener.git/internal/mock"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/PaBah/url-shortener.git/internal/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func TestLoggerWork(t *testing.T) {
@@ -25,7 +26,7 @@ func TestLoggerWork(t *testing.T) {
 		Size   int    `json:"size"`
 	}
 
-	handler := RequestLogger(mock.NewHandlerMock(testMessage, http.StatusOK))
+	handler := LoggerMiddleware(mock.NewHandlerMock(testMessage, http.StatusOK))
 
 	expectedLog := LogRecord{
 		URI:    "/",
@@ -38,7 +39,7 @@ func TestLoggerWork(t *testing.T) {
 	encoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 	writer := bufio.NewWriter(&buffer)
 
-	Log = zap.New(zapcore.NewCore(encoder, zapcore.AddSync(writer), zapcore.DebugLevel))
+	zap.ReplaceGlobals(zap.New(zapcore.NewCore(encoder, zapcore.AddSync(writer), zapcore.DebugLevel)))
 
 	srv := httptest.NewServer(handler)
 

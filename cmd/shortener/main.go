@@ -27,11 +27,11 @@ func main() {
 	store = &inFileStore
 	newServer := server.NewRouter(options, &store)
 
-	logger.Log.Info("Start server on", zap.String("address", options.ServerAddress))
+	logger.Log().Info("Start server on", zap.String("address", options.ServerAddress))
 
 	err := http.ListenAndServe(options.ServerAddress, newServer)
 
 	if err != nil {
-		logger.Log.Error("Server crashed with error: ", zap.Error(err))
+		logger.Log().Error("Server crashed with error: ", zap.Error(err))
 	}
 }
