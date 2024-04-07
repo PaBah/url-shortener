@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os/signal"
+	"syscall"
 
 	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
 	"github.com/PaBah/url-shortener.git/internal/config"
@@ -29,9 +32,16 @@ func main() {
 
 	logger.Log().Info("Start server on", zap.String("address", options.ServerAddress))
 
-	err := http.ListenAndServe(options.ServerAddress, newServer)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	if err != nil {
-		logger.Log().Error("Server crashed with error: ", zap.Error(err))
-	}
+	go func() {
+		err := http.ListenAndServe(options.ServerAddress, newServer)
+
+		if err != nil {
+			logger.Log().Error("Server crashed with error: ", zap.Error(err))
+		}
+	}()
+
+	<-ctx.Done()
 }
