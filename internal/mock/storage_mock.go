@@ -7,7 +7,7 @@
 //
 
 // Package mock_storage is a generated GoMock package.
-package storage
+package mock
 
 import (
 	reflect "reflect"

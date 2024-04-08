@@ -1,14 +1,16 @@
 package server
 
 import (
-	"github.com/PaBah/url-shortener.git/internal/config"
-	"github.com/PaBah/url-shortener.git/internal/storage"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/PaBah/url-shortener.git/internal/mock"
+	"github.com/PaBah/url-shortener.git/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestServer(t *testing.T) {
@@ -34,7 +36,7 @@ func TestServer(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	var store storage.Repository
-	rm := storage.NewMockRepository(ctrl)
+	rm := mock.NewMockRepository(ctrl)
 	store = rm
 
 	rm.

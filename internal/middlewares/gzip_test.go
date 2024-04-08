@@ -1,54 +1,25 @@
-package server
+package middlewares
 
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/PaBah/url-shortener.git/internal/config"
-	"github.com/PaBah/url-shortener.git/internal/storage"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/PaBah/url-shortener.git/internal/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGzipCompression(t *testing.T) {
-	options := &config.Options{
-		ServerAddress: ":8080",
-		BaseURL:       "http://localhost:8080",
-	}
-
-	ctrl := gomock.NewController(t)
-	var store storage.Repository
-	rm := storage.NewMockRepository(ctrl)
-
-	store = rm
-
-	rm.
-		EXPECT().
-		Store(gomock.Eq("https://practicum.yandex.ru/")).
-		Return("2187b119").
-		AnyTimes()
-	rm.
-		EXPECT().
-		FindByID("2187b119").
-		Return("https://practicum.yandex.ru/", nil).
-		AnyTimes()
-
-	s := Server{
-		options: options,
-		storage: &store,
-	}
-
-	handler := GzipMiddleware(s.apiShortenHandle)
+	testMessage := `{"test":"test"}`
+	handler := GzipMiddleware(mock.NewHandlerMock(testMessage, http.StatusCreated))
 
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
 	requestBody := `{"url":"https://practicum.yandex.ru/"}`
-
-	successBody := `{"result":"http://localhost:8080/2187b119"}`
 
 	t.Run("sends_gzip", func(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
@@ -73,7 +44,7 @@ func TestGzipCompression(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 
 		require.NoError(t, err)
-		require.JSONEq(t, successBody, string(b))
+		require.JSONEq(t, testMessage, string(b))
 	})
 
 	t.Run("accepts_gzip", func(t *testing.T) {
@@ -95,6 +66,6 @@ func TestGzipCompression(t *testing.T) {
 		b, err := io.ReadAll(zr)
 		require.NoError(t, err)
 
-		require.JSONEq(t, successBody, string(b))
+		require.JSONEq(t, testMessage, string(b))
 	})
 }

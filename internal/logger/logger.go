@@ -30,7 +30,11 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode
 }
 
-var Log *zap.Logger = zap.NewNop()
+//var Log *zap.Logger = zap.NewNop()
+
+func Log() *zap.Logger {
+	return zap.L()
+}
 
 // Initialize инициализирует синглтон логера с необходимым уровнем логирования.
 func Initialize(level string) error {
@@ -44,12 +48,12 @@ func Initialize(level string) error {
 	if err != nil {
 		return err
 	}
-	Log = zl
+	zap.ReplaceGlobals(zl)
 	return nil
 }
 
-// RequestLogger — middleware-логер для входящих HTTP-запросов.
-func RequestLogger(h http.HandlerFunc) http.HandlerFunc {
+// LoggerMiddleware — middleware-логер для входящих HTTP-запросов.
+func LoggerMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -61,11 +65,11 @@ func RequestLogger(h http.HandlerFunc) http.HandlerFunc {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
-		h(&lw, r)
+		h.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
 
-		Log.Info("got incoming HTTP request",
+		Log().Info("got incoming HTTP request",
 			zap.String("uri", r.RequestURI),
 			zap.String("method", r.Method),
 			zap.Int("status", responseData.status),

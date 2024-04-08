@@ -1,8 +1,10 @@
 package storage
 
 import (
-	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInFileStorage_FindByID(t *testing.T) {
@@ -30,7 +32,7 @@ func TestInFileStorage_FindByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InMemoryStorage{
+			cs := &InFileStorage{
 				state: tt.state,
 			}
 			gotData, err := cs.FindByID(tt.ID)
@@ -66,7 +68,7 @@ func TestInFileStorage_Store(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InMemoryStorage{
+			cs := &InFileStorage{
 				state: tt.state,
 			}
 			cs.Store(tt.value)
@@ -89,8 +91,24 @@ func TestInFileStorage_buildID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InMemoryStorage{}
+			cs := &InFileStorage{}
 			assert.Equal(t, cs.buildID(tt.value), tt.wantValue, "Сгенерированный и ожидаемый ID не совпадают")
 		})
 	}
+}
+
+func TestWorkWithFile(t *testing.T) {
+	fs := NewInFileStorage("/tmp/.test_store")
+	defer fs.Close()
+
+	fs.state = map[string]string{"test": "test"}
+
+	err := fs.writeBackup()
+	assert.NoError(t, err, "data had been written with error")
+
+	fs.state = nil
+	fs.init("/tmp/.test_store")
+
+	assert.Equal(t, fs.state, map[string]string{"test": "test"}, "data had been read with error")
+	_ = os.Remove("/tmp/.test_store")
 }
