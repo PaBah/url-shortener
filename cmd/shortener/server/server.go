@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -47,10 +48,14 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		storage: storage,
 	}
 
-	r.Post("/", s.postURLHandle)
-	r.Get("/{id}", s.getShortURLHandle)
-	r.MethodNotAllowed(func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusBadRequest)
-	})
+	r.Post("/", logger.RequestLogger(s.postURLHandle))
+	r.Get("/{id}", logger.RequestLogger(s.getShortURLHandle))
+	r.MethodNotAllowed(
+		logger.RequestLogger(
+			func(writer http.ResponseWriter, request *http.Request) {
+				writer.WriteHeader(http.StatusBadRequest)
+			},
+		),
+	)
 	return r
 }
