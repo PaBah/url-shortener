@@ -5,4 +5,5 @@ type Options struct {
 	BaseURL         string
 	LogsLevel       string
 	FileStoragePath string
+	DatabaseDSN     string
 }

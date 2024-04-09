@@ -1,11 +1,14 @@
 package server
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/dto"
@@ -13,6 +16,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/middlewares"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 
@@ -83,6 +87,24 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s Server) pingHandler(res http.ResponseWriter, req *http.Request) {
+	db, err := sql.Open("pgx", s.options.DatabaseDSN)
+	if err != nil {
+		logger.Log().Error("Server can not connect to DB ", zap.Error(err))
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 // NewRouter Creates router
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
@@ -96,6 +118,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 
 	r.Post("/", s.postURLHandle)
 	r.Get("/{id}", s.getShortURLHandle)
+	r.Get("/ping", s.pingHandler)
 	r.Post("/api/shorten", s.apiShortenHandle)
 	r.MethodNotAllowed(
 		func(writer http.ResponseWriter, request *http.Request) {
