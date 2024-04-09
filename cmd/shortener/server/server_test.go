@@ -27,12 +27,13 @@ func TestServer(t *testing.T) {
 		{method: http.MethodGet, path: "/2a49568d", requestBody: "", expectedCode: http.StatusTemporaryRedirect, expectedBody: ""},
 		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusBadRequest, expectedBody: ""},
 		{method: http.MethodPost, path: "/api/shorten", requestBody: `{"url": "https://practicum.yandex.kz/"}`, expectedCode: http.StatusCreated, expectedBody: `{"result":"http://localhost:8080/2a49568d"}`},
-		{method: http.MethodGet, path: "/ping", requestBody: "", expectedCode: http.StatusOK, expectedBody: ""},
+		{method: http.MethodGet, path: "/ping", requestBody: "", expectedCode: http.StatusInternalServerError, expectedBody: ""},
 	}
 
 	options := &config.Options{
 		ServerAddress: ":8080",
 		BaseURL:       "http://localhost:8080",
+		DatabaseDSN:   "wrong DSN",
 	}
 
 	ctrl := gomock.NewController(t)
