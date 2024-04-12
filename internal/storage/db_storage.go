@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/PaBah/url-shortener.git/internal/logger"
@@ -42,7 +43,7 @@ func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string) {
 	ID = buildID(Data)
 
 	_, err := ds.db.ExecContext(ctx, `INSERT INTO urls(short_url, url) VALUES ($1, $2) ON CONFLICT DO NOTHING`, ID, Data)
-
+	fmt.Println(err)
 	if err != nil {
 		return
 	}
