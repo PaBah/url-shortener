@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,7 +14,6 @@ import (
 type InFileStorage struct {
 	state map[string]string
 	file  *os.File
-	db    *sql.DB
 }
 
 func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string) {
