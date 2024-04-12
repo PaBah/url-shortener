@@ -1,14 +1,11 @@
 package server
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/dto"
@@ -22,12 +19,12 @@ import (
 
 type Server struct {
 	options *config.Options
-	storage *storage.Repository
+	storage storage.Repository
 }
 
 func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
-	responseMessage, _ := (*s.storage).FindByID(shortID)
+	responseMessage, _ := s.storage.FindByID(req.Context(), shortID)
 	http.Redirect(res, req, responseMessage, http.StatusTemporaryRedirect)
 }
 
@@ -38,7 +35,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := (*s.storage).Store(string(body))
+	shortURL := s.storage.Store(req.Context(), string(body))
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL)
 	res.Header().Set("Content-Type", "")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
@@ -65,7 +62,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := (*s.storage).Store(requestData.URL)
+	shortURL := s.storage.Store(req.Context(), requestData.URL)
 	responseData := dto.ShortenResponse{
 		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
 	}
@@ -88,18 +85,13 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s Server) pingHandler(res http.ResponseWriter, req *http.Request) {
-	db, err := sql.Open("pgx", s.options.DatabaseDSN)
-	if err != nil {
-		logger.Log().Error("Server can not connect to DB ", zap.Error(err))
-		http.Error(res, err.Error(), http.StatusInternalServerError)
+	dbStorage, ok := s.storage.(*storage.DBStorage)
+	if !ok {
+		http.Error(res, "Service working not on top DB storage", http.StatusInternalServerError)
 		return
 	}
-	defer db.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
+	if err := dbStorage.Ping(req.Context()); err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -111,7 +103,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 
 	s := Server{
 		options: options,
-		storage: storage,
+		storage: *storage,
 	}
 	r.Use(middlewares.GzipMiddleware)
 	r.Use(logger.LoggerMiddleware)
