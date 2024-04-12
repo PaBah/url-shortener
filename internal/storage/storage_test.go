@@ -63,7 +63,7 @@ func TestInFileStorage_Store(t *testing.T) {
 
 		{
 			name:     "Empty store",
-			state:    nil,
+			state:    make(map[string]string),
 			value:    "https://practicum.yandex.ru/",
 			wantData: "2187b119",
 		},
