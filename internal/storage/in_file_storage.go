@@ -19,10 +19,6 @@ type InFileStorage struct {
 }
 
 func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string) {
-	if len(fs.state) == 0 {
-		fs.state = make(map[string]string)
-	}
-
 	ID = buildID(Data)
 	fs.state[ID] = Data
 
@@ -30,10 +26,6 @@ func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string) {
 }
 
 func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (Data string, err error) {
-	if fs.state == nil {
-		fs.state = make(map[string]string)
-	}
-
 	Data, found := fs.state[ID]
 	if !found {
 		return Data, fmt.Errorf("no value with such ID")

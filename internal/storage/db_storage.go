@@ -4,9 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"time"
-
-	"github.com/PaBah/url-shortener.git/internal/logger"
-	"go.uber.org/zap"
 )
 
 type DBStorage struct {
@@ -16,9 +13,9 @@ type DBStorage struct {
 func (ds *DBStorage) init(ctx context.Context, databaseDSN string) (err error) {
 	ds.db, err = sql.Open("pgx", databaseDSN)
 	if err != nil {
-		logger.Log().Error("Server can not connect to DB ", zap.Error(err))
+		return
 	}
-	_ = ds.migrate(ctx)
+	err = ds.migrate(ctx)
 	return
 }
 
@@ -33,7 +30,6 @@ func (ds *DBStorage) migrate(ctx context.Context) (err error) {
 		    url VARCHAR NOT NULL UNIQUE
 		    )
 		`)
-	logger.Log().Error("Migrations error: ", zap.Error(err))
 	return
 }
 
@@ -43,7 +39,7 @@ func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string) {
 	ID = buildID(Data)
 
 	_, err := ds.db.ExecContext(ctx, `INSERT INTO urls(short_url, url) VALUES ($1, $2) ON CONFLICT DO NOTHING`, ID, Data)
-	logger.Log().Error("Record insert error: ", zap.Error(err))
+
 	if err != nil {
 		return
 	}
@@ -57,7 +53,6 @@ func (ds *DBStorage) FindByID(ctx context.Context, ID string) (Data string, err 
 	row := ds.db.QueryRowContext(ctx, `SELECT url FROM urls WHERE short_url=$1`, ID)
 
 	err = row.Scan(&Data)
-	logger.Log().Error("Select error: ", zap.Error(err))
 	return
 }
 
