@@ -37,7 +37,7 @@ func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (Data string, 
 func (fs *InFileStorage) init(filePath string) {
 	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 
-	fs.state = map[string]string{}
+	fs.state = make(map[string]string)
 
 	decoder := json.NewDecoder(fs.file)
 	shortURLRecord := &models.ShortenURL{}
