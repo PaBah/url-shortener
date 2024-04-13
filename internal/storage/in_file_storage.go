@@ -32,6 +32,16 @@ func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (Data string, 
 	return Data, nil
 }
 
+func (fs *InFileStorage) StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error) {
+	ShortURLs = make(map[string]string)
+	for k, url := range URLs {
+		ID := buildID(url)
+		ShortURLs[k] = ID
+		fs.state[ID] = url
+	}
+	return
+}
+
 func (fs *InFileStorage) init(filePath string) {
 	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 
