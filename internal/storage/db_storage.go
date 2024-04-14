@@ -61,7 +61,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, URLs map[string]string) (Sh
 		ShortURLs[k] = ID
 		if err != nil {
 			// если ошибка, то откатываем изменения
-			tx.Rollback()
+			_ = tx.Rollback()
 			return nil, err
 		}
 	}

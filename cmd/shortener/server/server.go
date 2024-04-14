@@ -114,7 +114,7 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 
 	urlsMapToShortify := make(map[string]string)
 	for _, batchRequest := range *requestData {
-		urlsMapToShortify[batchRequest.CorrelationId] = batchRequest.URL
+		urlsMapToShortify[batchRequest.CorrelationID] = batchRequest.URL
 	}
 
 	shortenedURLs, err := s.storage.StoreBatch(req.Context(), urlsMapToShortify)
@@ -124,9 +124,9 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 	}
 
 	var responseData []dto.BatchShortenResponse
-	for correlationId, shortenedURL := range shortenedURLs {
+	for correlationID, shortenedURL := range shortenedURLs {
 		responseData = append(responseData, dto.BatchShortenResponse{
-			CorrelationId: correlationId,
+			CorrelationID: correlationID,
 			ShortURL:      fmt.Sprintf("%s/%s", s.options.BaseURL, shortenedURL),
 		})
 	}

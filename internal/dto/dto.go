@@ -10,12 +10,12 @@ type (
 	}
 
 	BatchShortenRequest struct {
-		CorrelationId string `json:"correlation_id"`
+		CorrelationID string `json:"correlation_id"`
 		URL           string `json:"original_url"`
 	}
 
 	BatchShortenResponse struct {
-		CorrelationId string `json:"correlation_id"`
+		CorrelationID string `json:"correlation_id"`
 		ShortURL      string `json:"short_url"`
 	}
 )
