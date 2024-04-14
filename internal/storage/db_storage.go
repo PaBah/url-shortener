@@ -57,7 +57,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, URLs map[string]string) (Sh
 		// все изменения записываются в транзакцию
 		ID := buildID(v)
 		_, err := tx.ExecContext(ctx,
-			"INSERT INTO urls (short_url, url) VALUES($1, $2)", ID, v)
+			"INSERT INTO urls (short_url, url) VALUES($1, $2) ON CONFLICT DO NOTHING", ID, v)
 		ShortURLs[k] = ID
 		if err != nil {
 			// если ошибка, то откатываем изменения

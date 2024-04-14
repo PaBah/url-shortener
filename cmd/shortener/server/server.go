@@ -110,7 +110,6 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(*requestData)
 
 	urlsMapToShortify := make(map[string]string)
 	for _, batchRequest := range *requestData {
