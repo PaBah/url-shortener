@@ -114,3 +114,14 @@ func TestWorkWithFile(t *testing.T) {
 	assert.Equal(t, fs.state, map[string]string{"test": "test"}, "data had been read with error")
 	_ = os.Remove("/tmp/.test_store")
 }
+
+func TestInFileStorage_StoreBatch(t *testing.T) {
+	fs := NewInFileStorage("/tmp/.test_store")
+	defer fs.Close()
+
+	shortURLs, err := fs.StoreBatch(context.Background(), map[string]string{"test1": "test", "test2": "test"})
+
+	assert.NoError(t, err, "Batch value insertion not failed")
+	assert.Equal(t, map[string]string{"test1": "bc2c0be9", "test2": "bc2c0be9"}, shortURLs, "All batch stored")
+	_ = os.Remove("/tmp/.test_store")
+}

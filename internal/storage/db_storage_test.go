@@ -76,3 +76,19 @@ func TestDBStorage_migrate(t *testing.T) {
 	err := ds.migrate(context.Background())
 	assert.NoError(t, err, "Don't not initialize DB storage with incorrect DSN")
 }
+
+func TestDBStorage_StoreBatch(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	ds := &DBStorage{
+		db: db,
+	}
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls (short_url, url) VALUES($1, $2) ON CONFLICT DO NOTHING")).
+		WithArgs("bc2c0be9", "test").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls (short_url, url) VALUES($1, $2) ON CONFLICT DO NOTHING")).
+		WithArgs("bc2c0be9", "test").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+	shortURLs, err := ds.StoreBatch(context.Background(), map[string]string{"test1": "test", "test2": "test"})
+	assert.NoError(t, err, "Batch value insertion not failed")
+	assert.Equal(t, map[string]string{"test1": "bc2c0be9", "test2": "bc2c0be9"}, shortURLs, "All batch stored")
+}

@@ -34,7 +34,7 @@ func TestLoggerWork(t *testing.T) {
 		Status: 200,
 		Size:   18,
 	}
-	//_ = Initialize("debug")
+	_ = Initialize("debug")
 	var buffer bytes.Buffer
 	encoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 	writer := bufio.NewWriter(&buffer)
