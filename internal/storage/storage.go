@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Store(ctx context.Context, Data string) (ID string)
+	Store(ctx context.Context, Data string) (ID string, duplicate bool)
 	FindByID(ctx context.Context, ID string) (Data string, err error)
 	StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error)
 }

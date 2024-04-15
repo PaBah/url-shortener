@@ -51,7 +51,7 @@ func TestDBStorage_Store(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls(short_url, url) VALUES ($1, $2) ON CONFLICT DO NOTHING")).
 		WithArgs("test", "test").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	ID := ds.Store(context.Background(), "test")
+	ID, _ := ds.Store(context.Background(), "test")
 	assert.Equal(t, "bc2c0be9", ID, "Found message scanned correctly")
 }
 

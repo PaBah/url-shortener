@@ -52,7 +52,7 @@ func TestServer(t *testing.T) {
 	rm.
 		EXPECT().
 		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.ru/")).
-		Return("2187b119").
+		Return("2187b119", false).
 		AnyTimes()
 	rm.
 		EXPECT().
@@ -62,7 +62,7 @@ func TestServer(t *testing.T) {
 	rm.
 		EXPECT().
 		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.kz/")).
-		Return("2a49568d").
+		Return("2a49568d", false).
 		AnyTimes()
 	rm.
 		EXPECT().

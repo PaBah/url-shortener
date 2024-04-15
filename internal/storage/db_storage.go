@@ -3,7 +3,11 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
+
+	_ "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type DBStorage struct {
@@ -33,16 +37,18 @@ func (ds *DBStorage) migrate(ctx context.Context) (err error) {
 	return
 }
 
-func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string) {
+func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string, duplicate bool) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	ID = buildID(Data)
+	const PG_DUPLICATE_KEY_ERROR_CODE string = "23505"
+	_, err := ds.db.ExecContext(ctx, `INSERT INTO urls(short_url, url) VALUES ($1, $2)`, ID, Data)
 
-	_, err := ds.db.ExecContext(ctx, `INSERT INTO urls(short_url, url) VALUES ($1, $2) ON CONFLICT DO NOTHING`, ID, Data)
-
-	if err != nil {
-		return
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == PG_DUPLICATE_KEY_ERROR_CODE {
+		duplicate = true
 	}
+
 	return
 }
 

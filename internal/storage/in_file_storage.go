@@ -16,10 +16,14 @@ type InFileStorage struct {
 	file  *os.File
 }
 
-func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string) {
+func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string, duplicate bool) {
 	ID = buildID(Data)
-	fs.state[ID] = Data
+	_, duplicate = fs.state[ID]
+	if duplicate {
+		return
+	}
 
+	fs.state[ID] = Data
 	return
 }
 

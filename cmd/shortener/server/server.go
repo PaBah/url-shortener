@@ -35,11 +35,17 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := s.storage.Store(req.Context(), string(body))
+	shortURL, duplicate := s.storage.Store(req.Context(), string(body))
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL)
 	res.Header().Set("Content-Type", "")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
-	res.WriteHeader(http.StatusCreated)
+
+	if duplicate {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
 	_, err = res.Write([]byte(shortenedURL))
 	if err != nil {
 		logger.Log().Error("Can not send response from postURLHandle:", zap.Error(err))
@@ -62,7 +68,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := s.storage.Store(req.Context(), requestData.URL)
+	shortURL, duplicate := s.storage.Store(req.Context(), requestData.URL)
 	responseData := dto.ShortenResponse{
 		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
 	}
@@ -75,7 +81,12 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.WriteHeader(http.StatusCreated)
+	if duplicate {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
 	_, err = res.Write(response)
 	if err != nil {
 		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))

@@ -50,11 +50,12 @@ func (mr *MockRepositoryMockRecorder) FindByID(ctx, ID interface{}) *gomock.Call
 }
 
 // Store mocks base method.
-func (m *MockRepository) Store(ctx context.Context, Data string) string {
+func (m *MockRepository) Store(ctx context.Context, Data string) (string, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", ctx, Data)
 	ret0, _ := ret[0].(string)
-	return ret0
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
 }
 
 // Store indicates an expected call of Store.
