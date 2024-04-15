@@ -41,11 +41,11 @@ func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string, duplica
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	ID = buildID(Data)
-	const PG_DUPLICATE_KEY_ERROR_CODE string = "23505"
+	const PGDuplicateKeyErrorCode string = "23505"
 	_, err := ds.db.ExecContext(ctx, `INSERT INTO urls(short_url, url) VALUES ($1, $2)`, ID, Data)
 
 	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == PG_DUPLICATE_KEY_ERROR_CODE {
+	if errors.As(err, &pgErr) && pgErr.Code == PGDuplicateKeyErrorCode {
 		duplicate = true
 	}
 
