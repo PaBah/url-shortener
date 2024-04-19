@@ -27,7 +27,6 @@ func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
 
 	responseMessage, _ := s.storage.FindByID(req.Context(), shortID)
-	res.Header().Set("Location", responseMessage)
 	http.Redirect(res, req, responseMessage, http.StatusTemporaryRedirect)
 }
 
@@ -40,7 +39,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 
 	shortURL, err := s.storage.Store(req.Context(), string(body))
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL)
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("Content-Type", "")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
 
 	if errors.Is(err, storage.ErrConflict) {
@@ -73,6 +72,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 
 	shortURL, err := s.storage.Store(req.Context(), requestData.URL)
 
+	res.Header().Set("Content-Type", "application/json")
 	if errors.Is(err, storage.ErrConflict) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
@@ -83,7 +83,6 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
 	}
 
-	res.Header().Set("Content-Type", "application/json")
 	response, err := json.Marshal(responseData)
 
 	if err != nil {
