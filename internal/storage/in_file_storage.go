@@ -50,6 +50,7 @@ func (fs *InFileStorage) initialize(filePath string) {
 	var err error
 	fs.file, err = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 	logger.Log().Error("Open file error", zap.Error(err))
+	logger.Log().Error("Open file path", zap.String("path", filePath))
 	fs.state = make(map[string]string)
 
 	decoder := json.NewDecoder(fs.file)
