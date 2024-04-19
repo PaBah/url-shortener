@@ -27,6 +27,13 @@ paths:
                 example: http://localhost:8080/2a49568d
         '400':
           description: Bad request
+        '409':
+          description: Such URL already saved in system
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: http://localhost:8080/2a49568d
   /{shortenedUrlUUID}:
     get:
       summary: Process shortened URL to original one propose
@@ -67,5 +74,62 @@ paths:
                   result:
                     type: string
                     example: http://localhost:8080/2a49568d
+        '400':
+          description: Bad request
+        '409':
+          description: Such URL already saved in system
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: http://localhost:8080/2a49568d
+
+  /ping:
+    get:
+      summary: Allows to check if DB connected correctly
+      description: Make PingContex for DB DSN
+      responses:
+        '200':
+          description: Everything is fine
+        '500':
+          description: Can not establish connection with DB
+  /api/shorten/batch:
+    post:
+      summary: Create shortened URL for list of send urls
+      description: Make shortening and save to storage each URL from list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  correlation_id:
+                    type: string
+                    example: aef12d
+                  original_url:
+                    type: string
+                    example: https://practicum.yandex.kz/
+      responses:
+        '201':
+          description: Short URLs successfully created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    correlation_id:
+                      type: string
+                      example: aef12d
+                    short_url:
+                      type: string
+                      example: http://localhost:8080/2a49568d
         '400':
           description: Bad request
