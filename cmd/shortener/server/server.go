@@ -40,7 +40,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 
 	shortURL, err := s.storage.Store(req.Context(), string(body))
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL)
-	res.Header().Set("Content-Type", "")
+	res.Header().Set("Content-Type", "application/json")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
 
 	if errors.Is(err, storage.ErrConflict) {
