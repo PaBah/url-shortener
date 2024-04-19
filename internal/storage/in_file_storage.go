@@ -28,7 +28,8 @@ func (fs *InFileStorage) Store(ctx context.Context, URL string) (ID string, err 
 }
 
 func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (URL string, err error) {
-	URL, found := fs.state[ID]
+	var found bool
+	URL, found = fs.state[ID]
 	logger.Log().Info("Find URL", zap.String("id", ID))
 	if !found {
 		return URL, fmt.Errorf("no value with such ID")
