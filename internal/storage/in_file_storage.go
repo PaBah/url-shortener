@@ -16,24 +16,24 @@ type InFileStorage struct {
 	file  *os.File
 }
 
-func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string, duplicate bool) {
-	ID = buildID(Data)
-	_, duplicate = fs.state[ID]
+func (fs *InFileStorage) Store(ctx context.Context, URL string) (ID string, err error) {
+	ID = buildID(URL)
+	_, duplicate := fs.state[ID]
 	if duplicate {
-		return
+		err = ErrConflict
 	}
 
-	fs.state[ID] = Data
+	fs.state[ID] = URL
 	return
 }
 
-func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (Data string, err error) {
-	Data, found := fs.state[ID]
+func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (URL string, err error) {
+	URL, found := fs.state[ID]
 	if !found {
-		return Data, fmt.Errorf("no value with such ID")
+		return URL, fmt.Errorf("no value with such ID")
 	}
 
-	return Data, nil
+	return URL, nil
 }
 
 func (fs *InFileStorage) StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error) {
@@ -46,7 +46,7 @@ func (fs *InFileStorage) StoreBatch(ctx context.Context, URLs map[string]string)
 	return
 }
 
-func (fs *InFileStorage) init(filePath string) {
+func (fs *InFileStorage) initialize(filePath string) {
 	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 
 	fs.state = make(map[string]string)
@@ -87,6 +87,6 @@ func (fs *InFileStorage) Close() error {
 
 func NewInFileStorage(filePath string) InFileStorage {
 	store := InFileStorage{}
-	store.init(filePath)
+	store.initialize(filePath)
 	return store
 }

@@ -3,12 +3,15 @@ package storage
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"hash/fnv"
 )
 
+var ErrConflict = errors.New("data conflict")
+
 type Repository interface {
-	Store(ctx context.Context, Data string) (ID string, duplicate bool)
-	FindByID(ctx context.Context, ID string) (Data string, err error)
+	Store(ctx context.Context, URL string) (ID string, err error)
+	FindByID(ctx context.Context, ID string) (URL string, err error)
 	StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error)
 }
 

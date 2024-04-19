@@ -109,7 +109,7 @@ func TestWorkWithFile(t *testing.T) {
 	assert.NoError(t, err, "data had been written with error")
 
 	fs.state = nil
-	fs.init("/tmp/.test_store")
+	fs.initialize("/tmp/.test_store")
 
 	assert.Equal(t, fs.state, map[string]string{"test": "test"}, "data had been read with error")
 	_ = os.Remove("/tmp/.test_store")
