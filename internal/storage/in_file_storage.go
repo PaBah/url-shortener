@@ -22,17 +22,18 @@ func (fs *InFileStorage) Store(ctx context.Context, URL string) (ID string, err 
 	if duplicate {
 		err = ErrConflict
 	}
-
+	logger.Log().Info("Saved ID", zap.String("id", ID))
 	fs.state[ID] = URL
 	return
 }
 
 func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (URL string, err error) {
 	URL, found := fs.state[ID]
+	logger.Log().Info("Find URL", zap.String("id", ID))
 	if !found {
 		return URL, fmt.Errorf("no value with such ID")
 	}
-
+	logger.Log().Info("Found URL", zap.String("id", URL))
 	return URL, nil
 }
 

@@ -27,6 +27,7 @@ func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
 
 	responseMessage, _ := s.storage.FindByID(req.Context(), shortID)
+	res.Header().Set("Location", responseMessage)
 	http.Redirect(res, req, responseMessage, http.StatusTemporaryRedirect)
 }
 
