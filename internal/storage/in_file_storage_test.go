@@ -74,7 +74,8 @@ func TestInFileStorage_Store(t *testing.T) {
 			cs := &InFileStorage{
 				state: tt.state,
 			}
-			cs.Store(ctx, tt.value)
+			ID, _ := cs.Store(ctx, tt.value)
+			assert.Equal(t, ID, tt.wantData)
 			assert.Equal(t, cs.state[tt.wantData], tt.value, "Результат после добавления не совпадает с ожидаемым")
 		})
 	}

@@ -47,8 +47,9 @@ func (fs *InFileStorage) StoreBatch(ctx context.Context, URLs map[string]string)
 }
 
 func (fs *InFileStorage) initialize(filePath string) {
-	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
-
+	var err error
+	fs.file, err = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
+	logger.Log().Error("Open file error", zap.Error(err))
 	fs.state = make(map[string]string)
 
 	decoder := json.NewDecoder(fs.file)
