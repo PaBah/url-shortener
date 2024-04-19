@@ -22,7 +22,6 @@ func (fs *InFileStorage) Store(ctx context.Context, URL string) (ID string, err 
 	if duplicate {
 		err = ErrConflict
 	}
-	logger.Log().Info("Saved ID", zap.String("id", ID))
 	fs.state[ID] = URL
 	return
 }
@@ -30,11 +29,9 @@ func (fs *InFileStorage) Store(ctx context.Context, URL string) (ID string, err 
 func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (URL string, err error) {
 	var found bool
 	URL, found = fs.state[ID]
-	logger.Log().Info("Find URL", zap.String("id", ID))
 	if !found {
 		return URL, fmt.Errorf("no value with such ID")
 	}
-	logger.Log().Info("Found URL", zap.String("id", URL))
 	return URL, nil
 }
 
@@ -49,12 +46,8 @@ func (fs *InFileStorage) StoreBatch(ctx context.Context, URLs map[string]string)
 }
 
 func (fs *InFileStorage) initialize(filePath string) {
-	var err error
-	fs.file, err = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
-		logger.Log().Error("Open file error", zap.Error(err))
-	}
-	logger.Log().Info("Open file path", zap.String("path", filePath))
+	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
+
 	fs.state = make(map[string]string)
 
 	decoder := json.NewDecoder(fs.file)

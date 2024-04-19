@@ -6,11 +6,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"go.uber.org/zap"
 )
 
 type DBStorage struct {
@@ -18,13 +20,16 @@ type DBStorage struct {
 }
 
 func (ds *DBStorage) initialize(ctx context.Context, databaseDSN string) (err error) {
+	logger.Log().Info("DSN", zap.String("DSN", databaseDSN))
 	ds.db, err = sql.Open("pgx", databaseDSN)
 	if err != nil {
+		logger.Log().Error("File open error", zap.Error(err))
 		return
 	}
 
 	driver, err := postgres.WithInstance(ds.db, &postgres.Config{})
 	if err != nil {
+		logger.Log().Error("Driver open error", zap.Error(err))
 		return err
 	}
 
@@ -32,10 +37,14 @@ func (ds *DBStorage) initialize(ctx context.Context, databaseDSN string) (err er
 		"file://db/migrations",
 		"postgres", driver)
 	if err != nil {
+		logger.Log().Error("Migrate instance create", zap.Error(err))
 		return err
 	}
 
 	err = m.Up()
+	if err != nil {
+		logger.Log().Error("Migration error", zap.Error(err))
+	}
 	return
 }
 
