@@ -1,14 +1,12 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/dto"
@@ -27,10 +25,8 @@ type Server struct {
 
 func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
-	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
-	defer cancel()
 
-	responseMessage, _ := s.storage.FindByID(ctx, shortID)
+	responseMessage, _ := s.storage.FindByID(req.Context(), shortID)
 	http.Redirect(res, req, responseMessage, http.StatusTemporaryRedirect)
 }
 
@@ -41,10 +37,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
-	defer cancel()
-
-	shortURL, err := s.storage.Store(ctx, string(body))
+	shortURL, err := s.storage.Store(req.Context(), string(body))
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL)
 	res.Header().Set("Content-Type", "")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
@@ -77,9 +70,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
-	defer cancel()
-	shortURL, err := s.storage.Store(ctx, requestData.URL)
+	shortURL, err := s.storage.Store(req.Context(), requestData.URL)
 
 	if errors.Is(err, storage.ErrConflict) {
 		res.WriteHeader(http.StatusConflict)
