@@ -60,8 +60,12 @@ func (ds *DBStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err
 }
 
 func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]models.ShortenURL) (err error) {
-	rows, _ := ds.db.QueryContext(ctx, `SELECT short_url FROM urls`)
+	rows, err := ds.db.QueryContext(ctx, `SELECT short_url FROM urls`)
+	if err != nil {
+		return err
+	}
 	defer rows.Close()
+
 	shortURLs := make([]string, 0)
 	var shortURL string
 	for rows.Next() {
