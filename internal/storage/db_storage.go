@@ -69,7 +69,10 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 	shortURLs := make([]string, 0)
 	var shortURL string
 	for rows.Next() {
-		_ = rows.Scan(&shortURL)
+		err = rows.Scan(&shortURL)
+		if err != nil {
+			return err
+		}
 		shortURLs = append(shortURLs, shortURL)
 	}
 
