@@ -9,6 +9,7 @@ import (
 
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/mock"
+	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -63,39 +64,39 @@ func TestServer(t *testing.T) {
 
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.ru/")).
-		Return("2187b119", nil).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.ru/"))).
+		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq("http://prjdzevto8.yandex")).
-		Return("a033a480", storage.ErrConflict).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("http://prjdzevto8.yandex"))).
+		Return(storage.ErrConflict).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2187b119").
-		Return("https://practicum.yandex.ru/", nil).
+		Return(models.NewShortURL("https://practicum.yandex.ru/"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.kz/")).
-		Return("2a49568d", nil).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.kz/"))).
+		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2a49568d").
-		Return("https://practicum.yandex.kz/", nil).
+		Return(models.NewShortURL("https://practicum.yandex.kz/"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]string{"1": "https://practicum.yandex.kz/"})).
-		Return(map[string]string{"1": "2a49568d"}, nil).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/")})).
+		Return(nil).
 		AnyTimes()
 	err := errors.New("Error")
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]string{"1": "https://practicum.kz/"})).
-		Return(nil, err).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/")})).
+		Return(err).
 		AnyTimes()
 	sh := NewRouter(options, &store)
 

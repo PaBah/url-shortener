@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,21 +14,21 @@ func TestInFileStorage_FindByID(t *testing.T) {
 		name     string
 		state    map[string]string
 		ID       string
-		wantData string
+		wantData models.ShortenURL
 		wantErr  bool
 	}{
 		{
 			name:     "Successfully found value",
 			state:    map[string]string{"2187b119": "https://practicum.yandex.ru/"},
 			ID:       "2187b119",
-			wantData: "https://practicum.yandex.ru/",
+			wantData: models.NewShortURL("https://practicum.yandex.ru/"),
 			wantErr:  false,
 		},
 		{
 			name:     "No value in store",
 			state:    nil,
 			ID:       "2187b119",
-			wantData: "",
+			wantData: models.ShortenURL{},
 			wantErr:  true,
 		},
 	}
@@ -51,20 +52,20 @@ func TestInFileStorage_Store(t *testing.T) {
 	tests := []struct {
 		name     string
 		state    map[string]string
-		value    string
+		value    models.ShortenURL
 		wantData string
 	}{
 		{
 			name:     "With initialed store",
 			state:    map[string]string{"2187b119": "https://practicum.yandex.ru/"},
-			value:    "https://practicum.yandex.ru/",
+			value:    models.NewShortURL("https://practicum.yandex.ru/"),
 			wantData: "2187b119",
 		},
 
 		{
 			name:     "Empty store",
 			state:    make(map[string]string),
-			value:    "https://practicum.yandex.ru/",
+			value:    models.NewShortURL("https://practicum.yandex.ru/"),
 			wantData: "2187b119",
 		},
 	}
@@ -74,28 +75,9 @@ func TestInFileStorage_Store(t *testing.T) {
 			cs := &InFileStorage{
 				state: tt.state,
 			}
-			ID, _ := cs.Store(ctx, tt.value)
-			assert.Equal(t, ID, tt.wantData)
-			assert.Equal(t, cs.state[tt.wantData], tt.value, "Результат после добавления не совпадает с ожидаемым")
-		})
-	}
-}
-
-func TestInFileStorage_buildID(t *testing.T) {
-	tests := []struct {
-		name      string
-		value     string
-		wantValue string
-	}{
-		{
-			name:      "ID Generated in expected way",
-			value:     "https://practicum.yandex.ru/",
-			wantValue: "2187b119",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, buildID(tt.value), tt.wantValue, "Сгенерированный и ожидаемый ID не совпадают")
+			err := cs.Store(ctx, tt.value)
+			assert.NoError(t, err)
+			assert.Equal(t, cs.state[tt.wantData], tt.value.OriginalURL, "Результат после добавления не совпадает с ожидаемым")
 		})
 	}
 }
@@ -119,10 +101,12 @@ func TestWorkWithFile(t *testing.T) {
 func TestInFileStorage_StoreBatch(t *testing.T) {
 	fs := NewInFileStorage("/tmp/.test_store")
 	defer fs.Close()
-
-	shortURLs, err := fs.StoreBatch(context.Background(), map[string]string{"test1": "test", "test2": "test"})
+	shortURLs := map[string]models.ShortenURL{
+		"test1": models.NewShortURL("test"),
+		"test2": models.NewShortURL("test"),
+	}
+	err := fs.StoreBatch(context.Background(), shortURLs)
 
 	assert.NoError(t, err, "Batch value insertion not failed")
-	assert.Equal(t, map[string]string{"test1": "bc2c0be9", "test2": "bc2c0be9"}, shortURLs, "All batch stored")
 	_ = os.Remove("/tmp/.test_store")
 }

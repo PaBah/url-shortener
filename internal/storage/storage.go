@@ -2,22 +2,15 @@ package storage
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
-	"hash/fnv"
+
+	"github.com/PaBah/url-shortener.git/internal/models"
 )
 
 var ErrConflict = errors.New("data conflict")
 
 type Repository interface {
-	Store(ctx context.Context, URL string) (ID string, err error)
-	FindByID(ctx context.Context, ID string) (URL string, err error)
-	StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error)
-}
-
-func buildID(Value string) (ID string) {
-	h := fnv.New32()
-	h.Write([]byte(Value))
-	ID = hex.EncodeToString(h.Sum(nil))
-	return
+	Store(ctx context.Context, shortURL models.ShortenURL) (err error)
+	FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error)
+	StoreBatch(ctx context.Context, shortURLsMap map[string]models.ShortenURL) (err error)
 }
