@@ -28,7 +28,7 @@ func TestInFileStorage_FindByID(t *testing.T) {
 			name:     "No value in store",
 			state:    nil,
 			ID:       "2187b119",
-			wantData: models.ShortenURL{},
+			wantData: models.NewShortURL(""),
 			wantErr:  true,
 		},
 	}
@@ -57,7 +57,7 @@ func TestInFileStorage_Store(t *testing.T) {
 	}{
 		{
 			name:     "With initialed store",
-			state:    map[string]string{"2187b119": "https://practicum.yandex.ru/"},
+			state:    make(map[string]string),
 			value:    models.NewShortURL("https://practicum.yandex.ru/"),
 			wantData: "2187b119",
 		},
