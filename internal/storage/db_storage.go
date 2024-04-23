@@ -75,6 +75,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 		}
 		shortURLs = append(shortURLs, shortURL)
 	}
+	err = rows.Err()
 
 	tx, err := ds.db.Begin()
 	if err != nil {
