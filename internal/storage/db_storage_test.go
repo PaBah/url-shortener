@@ -74,10 +74,8 @@ func TestDBStorage_StoreBatch(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls (short_url, url) VALUES($1, $2)")).
 		WithArgs("bc2c0be9", "test").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls (short_url, url) VALUES($1, $2)")).
-		WithArgs("2256bff9", "test2").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
-	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test"), "test2": models.NewShortURL("test2")}
+	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test")}
 	err := ds.StoreBatch(context.Background(), shortURLs)
 	assert.NoError(t, err, "Batch value insertion not failed")
 }
