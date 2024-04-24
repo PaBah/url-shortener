@@ -36,31 +36,32 @@ func TestServer(t *testing.T) {
 		DatabaseDSN:   "wrong DSN",
 	}
 
-	ctrl := gomock.NewController(t)
 	var store storage.Repository
+	ctrl := gomock.NewController(t)
 	rm := mock.NewMockRepository(ctrl)
 	store = rm
 
 	rm.
 		EXPECT().
-		Store(gomock.Eq("https://practicum.yandex.ru/")).
+		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.ru/")).
 		Return("2187b119").
 		AnyTimes()
 	rm.
 		EXPECT().
-		FindByID("2187b119").
+		FindByID(gomock.Any(), "2187b119").
 		Return("https://practicum.yandex.ru/", nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Eq("https://practicum.yandex.kz/")).
+		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.kz/")).
 		Return("2a49568d").
 		AnyTimes()
 	rm.
 		EXPECT().
-		FindByID("2a49568d").
+		FindByID(gomock.Any(), "2a49568d").
 		Return("https://practicum.yandex.kz/", nil).
 		AnyTimes()
+	sh := NewRouter(options, &store)
 
 	for _, tc := range testCases {
 		t.Run(tc.method, func(t *testing.T) {
@@ -70,7 +71,6 @@ func TestServer(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			sh := NewRouter(options, &store)
 			sh.ServeHTTP(w, r)
 
 			assert.Equal(t, tc.expectedCode, w.Code, "Код ответа не совпадает с ожидаемым")

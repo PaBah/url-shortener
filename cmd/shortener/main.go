@@ -24,10 +24,18 @@ func main() {
 	}
 
 	var store storage.Repository
-	inFileStore := storage.NewInFileStorage(options.FileStoragePath)
-	defer inFileStore.Close()
+	dbStore, err := storage.NewDBStorage(context.Background(), options.DatabaseDSN)
+	if err != nil {
+		logger.Log().Error("Database error with start", zap.Error(err))
+		inFileStore := storage.NewInFileStorage(options.FileStoragePath)
+		store = &inFileStore
 
-	store = &inFileStore
+		defer inFileStore.Close()
+	} else {
+		store = &dbStore
+		defer dbStore.Close()
+	}
+
 	newServer := server.NewRouter(options, &store)
 
 	logger.Log().Info("Start server on", zap.String("address", options.ServerAddress))

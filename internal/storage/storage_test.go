@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -30,12 +31,13 @@ func TestInFileStorage_FindByID(t *testing.T) {
 			wantErr:  true,
 		},
 	}
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := &InFileStorage{
 				state: tt.state,
 			}
-			gotData, err := cs.FindByID(tt.ID)
+			gotData, err := cs.FindByID(ctx, tt.ID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FindByID() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -61,17 +63,18 @@ func TestInFileStorage_Store(t *testing.T) {
 
 		{
 			name:     "Empty store",
-			state:    nil,
+			state:    make(map[string]string),
 			value:    "https://practicum.yandex.ru/",
 			wantData: "2187b119",
 		},
 	}
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := &InFileStorage{
 				state: tt.state,
 			}
-			cs.Store(tt.value)
+			cs.Store(ctx, tt.value)
 			assert.Equal(t, cs.state[tt.wantData], tt.value, "Результат после добавления не совпадает с ожидаемым")
 		})
 	}
@@ -91,8 +94,7 @@ func TestInFileStorage_buildID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := &InFileStorage{}
-			assert.Equal(t, cs.buildID(tt.value), tt.wantValue, "Сгенерированный и ожидаемый ID не совпадают")
+			assert.Equal(t, buildID(tt.value), tt.wantValue, "Сгенерированный и ожидаемый ID не совпадают")
 		})
 	}
 }
