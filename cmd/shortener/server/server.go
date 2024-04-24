@@ -84,7 +84,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s Server) pingHandler(res http.ResponseWriter, req *http.Request) {
+func (s Server) pingHandle(res http.ResponseWriter, req *http.Request) {
 	dbStorage, ok := s.storage.(*storage.DBStorage)
 	if !ok {
 		http.Error(res, "Service working not on top DB storage", http.StatusInternalServerError)
@@ -92,6 +92,56 @@ func (s Server) pingHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := dbStorage.Ping(req.Context()); err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	requestData := &[]dto.BatchShortenRequest{}
+	err = json.Unmarshal(body, requestData)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	urlsMapToShortify := make(map[string]string)
+	for _, batchRequest := range *requestData {
+		urlsMapToShortify[batchRequest.CorrelationID] = batchRequest.URL
+	}
+
+	shortenedURLs, err := s.storage.StoreBatch(req.Context(), urlsMapToShortify)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var responseData []dto.BatchShortenResponse
+	for correlationID, shortenedURL := range shortenedURLs {
+		responseData = append(responseData, dto.BatchShortenResponse{
+			CorrelationID: correlationID,
+			ShortURL:      fmt.Sprintf("%s/%s", s.options.BaseURL, shortenedURL),
+		})
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	response, err := json.Marshal(responseData)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusCreated)
+	_, err = res.Write(response)
+	if err != nil {
+		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -110,8 +160,9 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 
 	r.Post("/", s.postURLHandle)
 	r.Get("/{id}", s.getShortURLHandle)
-	r.Get("/ping", s.pingHandler)
+	r.Get("/ping", s.pingHandle)
 	r.Post("/api/shorten", s.apiShortenHandle)
+	r.Post("/api/shorten/batch", s.apiShortenBatchHandle)
 	r.MethodNotAllowed(
 		func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusBadRequest)

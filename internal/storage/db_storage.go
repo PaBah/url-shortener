@@ -46,6 +46,26 @@ func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string) {
 	return
 }
 
+func (ds *DBStorage) StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error) {
+	// начинаем транзакцию
+	tx, err := ds.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	ShortURLs = make(map[string]string)
+	for k, v := range URLs {
+		ID := buildID(v)
+		_, err := tx.ExecContext(ctx,
+			"INSERT INTO urls (short_url, url) VALUES($1, $2) ON CONFLICT DO NOTHING", ID, v)
+		ShortURLs[k] = ID
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+	}
+	return ShortURLs, tx.Commit()
+}
+
 func (ds *DBStorage) FindByID(ctx context.Context, ID string) (Data string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
