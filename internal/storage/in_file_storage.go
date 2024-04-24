@@ -16,33 +16,36 @@ type InFileStorage struct {
 	file  *os.File
 }
 
-func (fs *InFileStorage) Store(ctx context.Context, Data string) (ID string) {
-	ID = buildID(Data)
-	fs.state[ID] = Data
-
+func (fs *InFileStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err error) {
+	_, duplicate := fs.state[shortURL.UUID]
+	if duplicate {
+		err = ErrConflict
+	}
+	fs.state[shortURL.UUID] = shortURL.OriginalURL
 	return
 }
 
-func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (Data string, err error) {
-	Data, found := fs.state[ID]
+func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
+	var (
+		found bool
+		URL   string
+	)
+	URL, found = fs.state[ID]
+	shortURL = models.NewShortURL(URL)
 	if !found {
-		return Data, fmt.Errorf("no value with such ID")
-	}
-
-	return Data, nil
-}
-
-func (fs *InFileStorage) StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error) {
-	ShortURLs = make(map[string]string)
-	for k, url := range URLs {
-		ID := buildID(url)
-		ShortURLs[k] = ID
-		fs.state[ID] = url
+		err = fmt.Errorf("no value with such ID")
 	}
 	return
 }
 
-func (fs *InFileStorage) init(filePath string) {
+func (fs *InFileStorage) StoreBatch(ctx context.Context, shortURLs map[string]models.ShortenURL) (err error) {
+	for _, shortURL := range shortURLs {
+		fs.state[shortURL.UUID] = shortURL.OriginalURL
+	}
+	return
+}
+
+func (fs *InFileStorage) initialize(filePath string) {
 	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 
 	fs.state = make(map[string]string)
@@ -83,6 +86,6 @@ func (fs *InFileStorage) Close() error {
 
 func NewInFileStorage(filePath string) InFileStorage {
 	store := InFileStorage{}
-	store.init(filePath)
+	store.initialize(filePath)
 	return store
 }

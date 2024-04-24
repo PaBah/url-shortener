@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/mock"
+	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -24,17 +26,28 @@ func TestServer(t *testing.T) {
 		storage      storage.Repository
 	}{
 		{method: http.MethodPost, path: "/", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusCreated, expectedBody: "http://localhost:8080/2187b119"},
+		{method: http.MethodPost, path: "/", requestBody: "http://prjdzevto8.yandex", expectedCode: http.StatusConflict, expectedBody: "http://localhost:8080/a033a480"},
 		{method: http.MethodGet, path: "/2187b119", requestBody: "", expectedCode: http.StatusTemporaryRedirect, expectedBody: ""},
 		{method: http.MethodGet, path: "/2a49568d", requestBody: "", expectedCode: http.StatusTemporaryRedirect, expectedBody: ""},
 		{method: http.MethodPut, path: "/2187b119", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusBadRequest, expectedBody: ""},
 		{method: http.MethodPost, path: "/api/shorten", requestBody: `{"url": "https://practicum.yandex.kz/"}`, expectedCode: http.StatusCreated, expectedBody: `{"result":"http://localhost:8080/2a49568d"}`},
+		{method: http.MethodPost, path: "/api/shorten", requestBody: `{"url": "https://practicum.yande`, expectedCode: http.StatusInternalServerError, expectedBody: ""},
+		{method: http.MethodPost, path: "/api/shorten", requestBody: `{"url": "http://prjdzevto8.yandex"}`, expectedCode: http.StatusConflict, expectedBody: `{"result":"http://localhost:8080/a033a480"}`},
 		{method: http.MethodGet, path: "/ping", requestBody: "", expectedCode: http.StatusInternalServerError, expectedBody: ""},
+		{method: http.MethodPost, path: "/api/shorten/batch", requestBody: `[x.kz/"}]`, expectedCode: http.StatusInternalServerError, expectedBody: ""},
 		{
 			method:       http.MethodPost,
 			path:         "/api/shorten/batch",
 			requestBody:  `[{"correlation_id": "1","original_url": "https://practicum.yandex.kz/"}]`,
 			expectedCode: http.StatusCreated,
 			expectedBody: `[{"correlation_id":"1","short_url":"http://localhost:8080/2a49568d"}]`,
+		},
+		{
+			method:       http.MethodPost,
+			path:         "/api/shorten/batch",
+			requestBody:  `[{"correlation_id": "1","original_url": "https://practicum.kz/"}]`,
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "",
 		},
 	}
 
@@ -51,28 +64,39 @@ func TestServer(t *testing.T) {
 
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.ru/")).
-		Return("2187b119").
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.ru/"))).
+		Return(nil).
+		AnyTimes()
+	rm.
+		EXPECT().
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("http://prjdzevto8.yandex"))).
+		Return(storage.ErrConflict).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2187b119").
-		Return("https://practicum.yandex.ru/", nil).
+		Return(models.NewShortURL("https://practicum.yandex.ru/"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq("https://practicum.yandex.kz/")).
-		Return("2a49568d").
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.kz/"))).
+		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2a49568d").
-		Return("https://practicum.yandex.kz/", nil).
+		Return(models.NewShortURL("https://practicum.yandex.kz/"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]string{"1": "https://practicum.yandex.kz/"})).
-		Return(map[string]string{"1": "2a49568d"}, nil).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/")})).
+		Return(nil).
+		AnyTimes()
+	err := errors.New("Error")
+	rm.
+		EXPECT().
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/")})).
+		Return(err).
 		AnyTimes()
 	sh := NewRouter(options, &store)
 

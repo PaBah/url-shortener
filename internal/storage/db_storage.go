@@ -3,76 +3,109 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"slices"
 	"time"
+
+	"github.com/PaBah/url-shortener.git/db"
+	"github.com/PaBah/url-shortener.git/internal/models"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type DBStorage struct {
 	db *sql.DB
 }
 
-func (ds *DBStorage) init(ctx context.Context, databaseDSN string) (err error) {
+func (ds *DBStorage) initialize(ctx context.Context, databaseDSN string) (err error) {
+
 	ds.db, err = sql.Open("pgx", databaseDSN)
 	if err != nil {
 		return
 	}
-	err = ds.migrate(ctx)
+
+	driver, err := iofs.New(db.MigrationsFS, "migrations")
+	if err != nil {
+		return err
+	}
+
+	d, err := postgres.WithInstance(ds.db, &postgres.Config{})
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithInstance("iofs", driver, "psql_db", d)
+	if err != nil {
+		return err
+	}
+
+	_ = m.Up()
 	return
 }
 
-func (ds *DBStorage) migrate(ctx context.Context) (err error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
+func (ds *DBStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err error) {
+	_, DBerr := ds.db.ExecContext(ctx,
+		`INSERT INTO urls(short_url, url) VALUES ($1, $2)`, shortURL.UUID, shortURL.OriginalURL)
 
-	_, err = ds.db.ExecContext(ctx, `
-		CREATE TABLE IF NOT EXISTS urls (
-		    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-		    short_url VARCHAR NOT NULL UNIQUE,
-		    url VARCHAR NOT NULL UNIQUE
-		    )
-		`)
+	var pgErr *pgconn.PgError
+	if errors.As(DBerr, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		err = ErrConflict
+	}
+
 	return
 }
 
-func (ds *DBStorage) Store(ctx context.Context, Data string) (ID string) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
-	ID = buildID(Data)
+func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]models.ShortenURL) (err error) {
+	rows, err := ds.db.QueryContext(ctx, `SELECT short_url FROM urls`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
 
-	_, err := ds.db.ExecContext(ctx, `INSERT INTO urls(short_url, url) VALUES ($1, $2) ON CONFLICT DO NOTHING`, ID, Data)
+	shortURLs := make([]string, 0)
+	var shortURL string
+	for rows.Next() {
+		err = rows.Scan(&shortURL)
+		if err != nil {
+			return err
+		}
+		shortURLs = append(shortURLs, shortURL)
+	}
+	err = rows.Err()
+
+	tx, err := ds.db.Begin()
+	if err != nil {
+		return err
+	}
+	for _, shortURL := range shortURLsMap {
+		if !slices.Contains(shortURLs, shortURL.UUID) {
+			shortURLs = append(shortURLs, shortURL.UUID)
+			_, err = tx.ExecContext(ctx,
+				"INSERT INTO urls (short_url, url) VALUES($1, $2)", shortURL.UUID, shortURL.OriginalURL)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				_ = tx.Rollback()
+				return
+			}
+		}
+	}
+	return tx.Commit()
+}
+
+func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
+	row := ds.db.QueryRowContext(ctx, `SELECT url FROM urls WHERE short_url=$1`, ID)
+	var URL string
+	err = row.Scan(&URL)
 
 	if err != nil {
 		return
 	}
-	return
-}
 
-func (ds *DBStorage) StoreBatch(ctx context.Context, URLs map[string]string) (ShortURLs map[string]string, err error) {
-	// начинаем транзакцию
-	tx, err := ds.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	ShortURLs = make(map[string]string)
-	for k, v := range URLs {
-		ID := buildID(v)
-		_, err := tx.ExecContext(ctx,
-			"INSERT INTO urls (short_url, url) VALUES($1, $2) ON CONFLICT DO NOTHING", ID, v)
-		ShortURLs[k] = ID
-		if err != nil {
-			_ = tx.Rollback()
-			return nil, err
-		}
-	}
-	return ShortURLs, tx.Commit()
-}
-
-func (ds *DBStorage) FindByID(ctx context.Context, ID string) (Data string, err error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
-
-	row := ds.db.QueryRowContext(ctx, `SELECT url FROM urls WHERE short_url=$1`, ID)
-
-	err = row.Scan(&Data)
+	shortURL = models.NewShortURL(URL)
 	return
 }
 
@@ -89,6 +122,6 @@ func (ds *DBStorage) Close() error {
 
 func NewDBStorage(ctx context.Context, databaseDSN string) (DBStorage, error) {
 	store := DBStorage{}
-	err := store.init(ctx, databaseDSN)
+	err := store.initialize(ctx, databaseDSN)
 	return store, err
 }

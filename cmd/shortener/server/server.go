@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/dto"
 	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/middlewares"
+	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -24,8 +26,9 @@ type Server struct {
 
 func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
-	responseMessage, _ := s.storage.FindByID(req.Context(), shortID)
-	http.Redirect(res, req, responseMessage, http.StatusTemporaryRedirect)
+
+	shortenURL, _ := s.storage.FindByID(req.Context(), shortID)
+	http.Redirect(res, req, shortenURL.OriginalURL, http.StatusTemporaryRedirect)
 }
 
 func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
@@ -35,11 +38,19 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := s.storage.Store(req.Context(), string(body))
-	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL)
+	shortURL := models.NewShortURL(string(body))
+	err = s.storage.Store(req.Context(), shortURL)
+
+	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL.UUID)
 	res.Header().Set("Content-Type", "")
 	res.Header().Set("Content-Length", strconv.Itoa(len(shortenedURL)))
-	res.WriteHeader(http.StatusCreated)
+
+	if errors.Is(err, storage.ErrConflict) {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
 	_, err = res.Write([]byte(shortenedURL))
 	if err != nil {
 		logger.Log().Error("Can not send response from postURLHandle:", zap.Error(err))
@@ -62,12 +73,20 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := s.storage.Store(req.Context(), requestData.URL)
-	responseData := dto.ShortenResponse{
-		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL),
-	}
+	shortURL := models.NewShortURL(requestData.URL)
+	err = s.storage.Store(req.Context(), shortURL)
 
 	res.Header().Set("Content-Type", "application/json")
+	if errors.Is(err, storage.ErrConflict) {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
+	responseData := dto.ShortenResponse{
+		Result: fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL.UUID),
+	}
+
 	response, err := json.Marshal(responseData)
 
 	if err != nil {
@@ -75,7 +94,6 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write(response)
 	if err != nil {
 		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
@@ -104,29 +122,30 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	requestData := &[]dto.BatchShortenRequest{}
-	err = json.Unmarshal(body, requestData)
+	requestData := make([]dto.BatchShortenRequest, 0)
+	err = json.Unmarshal(body, &requestData)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	urlsMapToShortify := make(map[string]string)
-	for _, batchRequest := range *requestData {
-		urlsMapToShortify[batchRequest.CorrelationID] = batchRequest.URL
+	shortURLsMap := make(map[string]models.ShortenURL, len(requestData))
+	for _, batchRequest := range requestData {
+		shortURL := models.NewShortURL(batchRequest.URL)
+		shortURLsMap[batchRequest.CorrelationID] = shortURL
 	}
 
-	shortenedURLs, err := s.storage.StoreBatch(req.Context(), urlsMapToShortify)
+	err = s.storage.StoreBatch(req.Context(), shortURLsMap)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var responseData []dto.BatchShortenResponse
-	for correlationID, shortenedURL := range shortenedURLs {
+	for correlationID, shortenedURL := range shortURLsMap {
 		responseData = append(responseData, dto.BatchShortenResponse{
 			CorrelationID: correlationID,
-			ShortURL:      fmt.Sprintf("%s/%s", s.options.BaseURL, shortenedURL),
+			ShortURL:      fmt.Sprintf("%s/%s", s.options.BaseURL, shortenedURL.UUID),
 		})
 	}
 
