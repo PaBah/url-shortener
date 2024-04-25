@@ -113,6 +113,9 @@ func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.S
 func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
 	var rows *sql.Rows
 	rows, err = ds.db.QueryContext(ctx, `SELECT url, short_url, user_id FROM urls WHERE user_id=$1`, ctx.Value(auth.ContextUserKey).(string))
+	if err != nil {
+		return
+	}
 	err = rows.Err()
 	defer rows.Close()
 
