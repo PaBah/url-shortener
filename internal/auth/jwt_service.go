@@ -11,23 +11,23 @@ import (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID int
+	UserID string
 }
 
 const (
-	TOKEN_EXP  = time.Hour * 3
-	SECRET_KEY = "supersecretkey"
+	TokenExp  = time.Hour * 3
+	SecretKey = "supersecretkey"
 )
 
-func BuildJWTString(userId int) (string, error) {
+func BuildJWTString(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExp)),
 		},
-		UserID: userId,
+		UserID: userID,
 	})
 
-	tokenString, err := token.SignedString([]byte(SECRET_KEY))
+	tokenString, err := token.SignedString([]byte(SecretKey))
 	if err != nil {
 		return "", err
 	}
@@ -35,22 +35,22 @@ func BuildJWTString(userId int) (string, error) {
 	return tokenString, nil
 }
 
-func GetUserId(tokenString string) int {
+func GetUserID(tokenString string) string {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
-			return []byte(SECRET_KEY), nil
+			return []byte(SecretKey), nil
 		})
 	if err != nil {
-		return -1
+		return ""
 	}
 
 	if !token.Valid {
 		logger.Log().Error("Token is not valid", zap.String("token", token.Raw))
-		return -1
+		return ""
 	}
 
 	return claims.UserID

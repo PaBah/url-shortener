@@ -3,32 +3,34 @@ package auth
 import (
 	"context"
 	"net/http"
+
+	"github.com/satori/go.uuid"
 )
 
+type key int
+
 const (
-	CONTEXT_USER_ID_KEY = "userID"
+	ContextUserKey key = iota
 )
 
 func PublicAuthorizationMiddleware(next http.Handler) http.Handler {
-	knownUsers := 0
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := -1
+		var userID string
 		authCookie, err := r.Cookie("Authorization")
 
 		if err != nil || authCookie == nil {
-			knownUsers++
-			userID = knownUsers
-			JWTToken, err := BuildJWTString(knownUsers)
+			userID = uuid.NewV4().String()
+			JWTToken, err := BuildJWTString(userID)
 			if err != nil {
 				http.Error(w, "Can not build auth token", http.StatusInternalServerError)
 				return
 			}
 			http.SetCookie(w, &http.Cookie{Name: "Authorization", Value: JWTToken})
 		} else {
-			userID = GetUserId(authCookie.Value)
+			userID = GetUserID(authCookie.Value)
 		}
 
-		ctx := context.WithValue(r.Context(), CONTEXT_USER_ID_KEY, userID)
+		ctx := context.WithValue(r.Context(), ContextUserKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

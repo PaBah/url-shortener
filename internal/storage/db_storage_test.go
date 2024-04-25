@@ -33,7 +33,7 @@ func TestDBStorage_FindByID(t *testing.T) {
 
 	Data, err := ds.FindByID(context.Background(), "test")
 	assert.NoError(t, err)
-	assert.Equal(t, models.NewShortURL("test", 1), Data, "Found message scanned correctly")
+	assert.Equal(t, models.NewShortURL("test", "1"), Data, "Found message scanned correctly")
 }
 
 func TestDBStorage_FindByID_with_Error(t *testing.T) {
@@ -69,7 +69,7 @@ func TestDBStorage_Store(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls(short_url, url) VALUES ($1, $2)")).
 		WithArgs("bc2c0be9", "test").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	shortURL := models.NewShortURL("test", 1)
+	shortURL := models.NewShortURL("test", "1")
 	_ = ds.Store(context.Background(), shortURL)
 	assert.Equal(t, "bc2c0be9", shortURL.UUID, "Found message scanned correctly")
 }
@@ -80,10 +80,10 @@ func TestDBStorage_Store_with_error(t *testing.T) {
 		db: db,
 	}
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls(short_url, url, user_id) VALUES ($1, $2, $3)")).
-		WithArgs("bc2c0be9", "test", 1).WillReturnError(&pgconn.PgError{Code: "23505"})
+		WithArgs("bc2c0be9", "test", "1").WillReturnError(&pgconn.PgError{Code: "23505"})
 
-	shortURL := models.NewShortURL("test", 1)
-	ctx := context.WithValue(context.Background(), auth.CONTEXT_USER_ID_KEY, 1)
+	shortURL := models.NewShortURL("test", "1")
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, 1)
 	err := ds.Store(ctx, shortURL)
 	assert.Error(t, err, "duplicate")
 }
@@ -104,10 +104,10 @@ func TestDBStorage_StoreBatch(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO urls (short_url, url, user_id) VALUES($1, $2, $3)")).
-		WithArgs("bc2c0be9", "test", 1).WillReturnResult(sqlmock.NewResult(1, 1))
+		WithArgs("bc2c0be9", "test", "1").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
-	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test", 1)}
-	ctx := context.WithValue(context.Background(), auth.CONTEXT_USER_ID_KEY, 1)
+	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test", "1")}
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, 1)
 	err := ds.StoreBatch(ctx, shortURLs)
 	assert.NoError(t, err, "Batch value insertion not failed")
 }
@@ -120,8 +120,8 @@ func TestDBStorage_StoreBatch_with_error(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT short_url FROM urls")).
 		WillReturnError(&pgconn.PgError{Code: "777"})
 
-	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test", 1)}
-	ctx := context.WithValue(context.Background(), auth.CONTEXT_USER_ID_KEY, 1)
+	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test", "1")}
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, 1)
 	err := ds.StoreBatch(ctx, shortURLs)
 	assert.Error(t, err, "Batch value insertion failed")
 }
@@ -140,8 +140,8 @@ func TestDBStorage_StoreBatch_parse_error(t *testing.T) {
 		WithArgs("bc2c0be9", "test").WillReturnError(&pgconn.PgError{Code: "777"})
 	mock.ExpectCommit()
 
-	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test", 1)}
-	ctx := context.WithValue(context.Background(), auth.CONTEXT_USER_ID_KEY, 1)
+	shortURLs := map[string]models.ShortenURL{"test1": models.NewShortURL("test", "1")}
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, 1)
 	err := ds.StoreBatch(ctx, shortURLs)
 	assert.Error(t, err, "Batch value insertion failed")
 }

@@ -100,7 +100,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
 	row := ds.db.QueryRowContext(ctx, `SELECT url, user_id FROM urls WHERE short_url=$1`, ID)
 	var URL string
-	var userID int
+	var userID string
 	err = row.Scan(&URL, &userID)
 
 	if err != nil {
@@ -112,7 +112,8 @@ func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.S
 }
 func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
 	var rows *sql.Rows
-	rows, err = ds.db.QueryContext(ctx, `SELECT url, short_url, user_id FROM urls WHERE user_id=$1`, ctx.Value(auth.CONTEXT_USER_ID_KEY).(int))
+	rows, err = ds.db.QueryContext(ctx, `SELECT url, short_url, user_id FROM urls WHERE user_id=$1`, ctx.Value(auth.ContextUserKey).(string))
+	err = rows.Err()
 	defer rows.Close()
 
 	shortURLs = make([]models.ShortenURL, 0)
@@ -124,7 +125,6 @@ func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.Shorte
 		}
 		shortURLs = append(shortURLs, shortURL)
 	}
-	err = rows.Err()
 	return
 }
 

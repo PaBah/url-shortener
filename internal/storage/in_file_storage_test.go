@@ -20,20 +20,20 @@ func TestInFileStorage_FindByID(t *testing.T) {
 	}{
 		{
 			name:     "Successfully found value",
-			state:    map[string]models.ShortenURL{"2187b119": models.NewShortURL("https://practicum.yandex.ru/", 1)},
+			state:    map[string]models.ShortenURL{"2187b119": models.NewShortURL("https://practicum.yandex.ru/", "1")},
 			ID:       "2187b119",
-			wantData: models.NewShortURL("https://practicum.yandex.ru/", 1),
+			wantData: models.NewShortURL("https://practicum.yandex.ru/", "1"),
 			wantErr:  false,
 		},
 		{
 			name:     "No value in store",
 			state:    nil,
 			ID:       "2187b119",
-			wantData: models.ShortenURL{UUID: "", UserID: 0, OriginalURL: ""},
+			wantData: models.ShortenURL{UUID: "", UserID: "", OriginalURL: ""},
 			wantErr:  true,
 		},
 	}
-	ctx := context.WithValue(context.Background(), auth.CONTEXT_USER_ID_KEY, 1)
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, 1)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := &InFileStorage{
@@ -58,19 +58,19 @@ func TestInFileStorage_Store(t *testing.T) {
 	}{
 		{
 			name:     "With initialed store",
-			state:    map[string]models.ShortenURL{"2a49568d": models.NewShortURL("https://practicum.yandex.kz/", 1)},
-			value:    models.NewShortURL("https://practicum.yandex.ru/", 1),
+			state:    map[string]models.ShortenURL{"2a49568d": models.NewShortURL("https://practicum.yandex.kz/", "1")},
+			value:    models.NewShortURL("https://practicum.yandex.ru/", "1"),
 			wantData: "2187b119",
 		},
 
 		{
 			name:     "Empty store",
 			state:    make(map[string]models.ShortenURL),
-			value:    models.NewShortURL("https://practicum.yandex.ru/", 1),
+			value:    models.NewShortURL("https://practicum.yandex.ru/", "1"),
 			wantData: "2187b119",
 		},
 	}
-	ctx := context.WithValue(context.Background(), auth.CONTEXT_USER_ID_KEY, 1)
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, "1")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cs := &InFileStorage{
@@ -87,7 +87,7 @@ func TestWorkWithFile(t *testing.T) {
 	fs := NewInFileStorage("/tmp/.test_store")
 	defer fs.Close()
 
-	fs.state = map[string]models.ShortenURL{"bc2c0be9": models.NewShortURL("test", 1)}
+	fs.state = map[string]models.ShortenURL{"bc2c0be9": models.NewShortURL("test", "1")}
 
 	err := fs.writeBackup()
 	assert.NoError(t, err, "data had been written with error")
@@ -95,7 +95,7 @@ func TestWorkWithFile(t *testing.T) {
 	fs.state = nil
 	fs.initialize("/tmp/.test_store")
 
-	assert.Equal(t, fs.state, map[string]models.ShortenURL{"bc2c0be9": models.NewShortURL("test", 1)}, "data had been read with error")
+	assert.Equal(t, fs.state, map[string]models.ShortenURL{"bc2c0be9": models.NewShortURL("test", "1")}, "data had been read with error")
 	_ = os.Remove("/tmp/.test_store")
 }
 
@@ -103,8 +103,8 @@ func TestInFileStorage_StoreBatch(t *testing.T) {
 	fs := NewInFileStorage("/tmp/.test_store")
 	defer fs.Close()
 	shortURLs := map[string]models.ShortenURL{
-		"test1": models.NewShortURL("test", 1),
-		"test2": models.NewShortURL("test", 1),
+		"test1": models.NewShortURL("test", "1"),
+		"test2": models.NewShortURL("test", "1"),
 	}
 	err := fs.StoreBatch(context.Background(), shortURLs)
 

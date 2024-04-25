@@ -65,38 +65,38 @@ func TestServer(t *testing.T) {
 
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.ru/", 1))).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.ru/", "1"))).
 		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq(models.NewShortURL("http://prjdzevto8.yandex", 1))).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("http://prjdzevto8.yandex", "1"))).
 		Return(storage.ErrConflict).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2187b119").
-		Return(models.NewShortURL("https://practicum.yandex.ru/", 1), nil).
+		Return(models.NewShortURL("https://practicum.yandex.ru/", "1"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.kz/", 1))).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.kz/", "1"))).
 		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2a49568d").
-		Return(models.NewShortURL("https://practicum.yandex.kz/", 1), nil).
+		Return(models.NewShortURL("https://practicum.yandex.kz/", "1"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/", 1)})).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/", "1")})).
 		Return(nil).
 		AnyTimes()
 	err := errors.New("Error")
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/", 1)})).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/", "1")})).
 		Return(err).
 		AnyTimes()
 	sh := NewRouter(options, &store)
@@ -110,7 +110,7 @@ func TestServer(t *testing.T) {
 				r = httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.requestBody))
 			}
 			w := httptest.NewRecorder()
-			JWTToken, _ := auth.BuildJWTString(1)
+			JWTToken, _ := auth.BuildJWTString("1")
 			r.Header.Set("Cookie", "Authorization="+JWTToken)
 
 			sh.ServeHTTP(w, r)

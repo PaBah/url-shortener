@@ -38,7 +38,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	shortURL := models.NewShortURL(string(body), req.Context().Value(auth.CONTEXT_USER_ID_KEY).(int))
+	shortURL := models.NewShortURL(string(body), req.Context().Value(auth.ContextUserKey).(string))
 	err = s.storage.Store(req.Context(), shortURL)
 
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL.UUID)
@@ -73,7 +73,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := models.NewShortURL(requestData.URL, req.Context().Value(auth.CONTEXT_USER_ID_KEY).(int))
+	shortURL := models.NewShortURL(requestData.URL, req.Context().Value(auth.ContextUserKey).(string))
 	err = s.storage.Store(req.Context(), shortURL)
 
 	res.Header().Set("Content-Type", "application/json")
@@ -131,7 +131,7 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 
 	shortURLsMap := make(map[string]models.ShortenURL, len(requestData))
 	for _, batchRequest := range requestData {
-		shortURL := models.NewShortURL(batchRequest.URL, req.Context().Value(auth.CONTEXT_USER_ID_KEY).(int))
+		shortURL := models.NewShortURL(batchRequest.URL, req.Context().Value(auth.ContextUserKey).(string))
 		shortURLsMap[batchRequest.CorrelationID] = shortURL
 	}
 

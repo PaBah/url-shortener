@@ -39,7 +39,7 @@ func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (shortURL mode
 func (fs *InFileStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
 	shortURLs = make([]models.ShortenURL, 0)
 	for _, shortURL := range fs.state {
-		if shortURL.UserID == ctx.Value(auth.CONTEXT_USER_ID_KEY).(int) {
+		if shortURL.UserID == ctx.Value(auth.ContextUserKey).(string) {
 			shortURLs = append(shortURLs, shortURL)
 		}
 	}
