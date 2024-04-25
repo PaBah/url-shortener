@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/PaBah/url-shortener.git/db"
+	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -49,7 +50,7 @@ func (ds *DBStorage) initialize(ctx context.Context, databaseDSN string) (err er
 
 func (ds *DBStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err error) {
 	_, DBerr := ds.db.ExecContext(ctx,
-		`INSERT INTO urls(short_url, url) VALUES ($1, $2)`, shortURL.UUID, shortURL.OriginalURL)
+		`INSERT INTO urls(short_url, url, user_id) VALUES ($1, $2, $3)`, shortURL.UUID, shortURL.OriginalURL, shortURL.UserID)
 
 	var pgErr *pgconn.PgError
 	if errors.As(DBerr, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -85,7 +86,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 		if !slices.Contains(shortURLs, shortURL.UUID) {
 			shortURLs = append(shortURLs, shortURL.UUID)
 			_, err = tx.ExecContext(ctx,
-				"INSERT INTO urls (short_url, url) VALUES($1, $2)", shortURL.UUID, shortURL.OriginalURL)
+				"INSERT INTO urls (short_url, url, user_id) VALUES($1, $2, $3)", shortURL.UUID, shortURL.OriginalURL, shortURL.UserID)
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				_ = tx.Rollback()
@@ -97,15 +98,33 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 }
 
 func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
-	row := ds.db.QueryRowContext(ctx, `SELECT url FROM urls WHERE short_url=$1`, ID)
+	row := ds.db.QueryRowContext(ctx, `SELECT url, user_id FROM urls WHERE short_url=$1`, ID)
 	var URL string
-	err = row.Scan(&URL)
+	var userID int
+	err = row.Scan(&URL, &userID)
 
 	if err != nil {
 		return
 	}
 
-	shortURL = models.NewShortURL(URL)
+	shortURL = models.NewShortURL(URL, userID)
+	return
+}
+func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
+	var rows *sql.Rows
+	rows, err = ds.db.QueryContext(ctx, `SELECT url, short_url, user_id FROM urls WHERE user_id=$1`, ctx.Value(auth.CONTEXT_USER_ID_KEY).(int))
+	defer rows.Close()
+
+	shortURLs = make([]models.ShortenURL, 0)
+	for rows.Next() {
+		var shortURL models.ShortenURL
+		err = rows.Scan(&shortURL.OriginalURL, &shortURL.UUID, &shortURL.UserID)
+		if err != nil {
+			return nil, err
+		}
+		shortURLs = append(shortURLs, shortURL)
+	}
+	err = rows.Err()
 	return
 }
 

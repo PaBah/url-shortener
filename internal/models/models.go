@@ -7,11 +7,12 @@ import (
 
 type ShortenURL struct {
 	UUID        string `json:"uuid"`
+	UserID      int    `json:"user_id"`
 	OriginalURL string `json:"original_URL"`
 }
 
-func NewShortURL(originalURL string) ShortenURL {
-	return ShortenURL{UUID: buildID(originalURL), OriginalURL: originalURL}
+func NewShortURL(originalURL string, userId int) ShortenURL {
+	return ShortenURL{UUID: buildID(originalURL), OriginalURL: originalURL, UserID: userId}
 }
 
 func buildID(Value string) (ID string) {

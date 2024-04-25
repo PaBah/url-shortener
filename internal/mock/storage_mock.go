@@ -50,6 +50,21 @@ func (mr *MockRepositoryMockRecorder) FindByID(ctx, ID interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockRepository)(nil).FindByID), ctx, ID)
 }
 
+// GetAllUsers mocks base method.
+func (m *MockRepository) GetAllUsers(ctx context.Context) ([]models.ShortenURL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
+	ret0, _ := ret[0].([]models.ShortenURL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllUsers indicates an expected call of GetAllUsers.
+func (mr *MockRepositoryMockRecorder) GetAllUsers(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockRepository)(nil).GetAllUsers), ctx)
+}
+
 // Store mocks base method.
 func (m *MockRepository) Store(ctx context.Context, shortURL models.ShortenURL) error {
 	m.ctrl.T.Helper()

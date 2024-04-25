@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/dto"
 	"github.com/PaBah/url-shortener.git/internal/logger"
@@ -37,8 +38,7 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	shortURL := models.NewShortURL(string(body))
+	shortURL := models.NewShortURL(string(body), req.Context().Value(auth.CONTEXT_USER_ID_KEY).(int))
 	err = s.storage.Store(req.Context(), shortURL)
 
 	shortenedURL := fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL.UUID)
@@ -73,7 +73,7 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := models.NewShortURL(requestData.URL)
+	shortURL := models.NewShortURL(requestData.URL, req.Context().Value(auth.CONTEXT_USER_ID_KEY).(int))
 	err = s.storage.Store(req.Context(), shortURL)
 
 	res.Header().Set("Content-Type", "application/json")
@@ -131,7 +131,7 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 
 	shortURLsMap := make(map[string]models.ShortenURL, len(requestData))
 	for _, batchRequest := range requestData {
-		shortURL := models.NewShortURL(batchRequest.URL)
+		shortURL := models.NewShortURL(batchRequest.URL, req.Context().Value(auth.CONTEXT_USER_ID_KEY).(int))
 		shortURLsMap[batchRequest.CorrelationID] = shortURL
 	}
 
@@ -165,8 +165,38 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 		return
 	}
 }
+func (s Server) apiUsersUrlsHandle(res http.ResponseWriter, req *http.Request) {
+	shortURLs, err := s.storage.GetAllUsers(req.Context())
+	if err != nil {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
 
-// NewRouter Creates router
+	var responseData []dto.UsersURLsResponse
+	for _, shortURL := range shortURLs {
+		responseData = append(responseData, dto.UsersURLsResponse{
+			OriginalURL: shortURL.OriginalURL,
+			ShortURL:    fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL.UUID),
+		})
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	response, err := json.Marshal(responseData)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusOK)
+	_, err = res.Write(response)
+	if err != nil {
+		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -177,15 +207,22 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r.Use(middlewares.GzipMiddleware)
 	r.Use(logger.LoggerMiddleware)
 
-	r.Post("/", s.postURLHandle)
-	r.Get("/{id}", s.getShortURLHandle)
-	r.Get("/ping", s.pingHandle)
-	r.Post("/api/shorten", s.apiShortenHandle)
-	r.Post("/api/shorten/batch", s.apiShortenBatchHandle)
-	r.MethodNotAllowed(
-		func(writer http.ResponseWriter, request *http.Request) {
-			writer.WriteHeader(http.StatusBadRequest)
-		},
-	)
+	r.Group(func(r chi.Router) {
+		r.Use(auth.PublicAuthorizationMiddleware)
+		r.Post("/", s.postURLHandle)
+		r.Get("/{id}", s.getShortURLHandle)
+		r.Get("/ping", s.pingHandle)
+		r.Post("/api/shorten", s.apiShortenHandle)
+		r.Post("/api/shorten/batch", s.apiShortenBatchHandle)
+		r.MethodNotAllowed(
+			func(writer http.ResponseWriter, request *http.Request) {
+				writer.WriteHeader(http.StatusBadRequest)
+			},
+		)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(auth.AuthorizedMiddleware)
+		r.Get("/api/user/urls", s.apiUsersUrlsHandle)
+	})
 	return r
 }
