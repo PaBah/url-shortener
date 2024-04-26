@@ -145,3 +145,18 @@ func TestDBStorage_StoreBatch_parse_error(t *testing.T) {
 	err := ds.StoreBatch(ctx, shortURLs)
 	assert.Error(t, err, "Batch value insertion failed")
 }
+
+func TestDBStorage_GetAllUsers(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	ds := &DBStorage{
+		db: db,
+	}
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT url, short_url, user_id FROM urls WHERE user_id=$1")).
+		WithArgs("test").
+		WillReturnRows(sqlmock.NewRows([]string{"url", "short_url", "user_id"}).
+			AddRow("url", "test", "test"))
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, "test")
+	Data, err := ds.GetAllUsers(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, []models.ShortenURL{models.ShortenURL{UUID: "test", OriginalURL: "url", UserID: "test"}}, Data, "Found message scanned correctly")
+}

@@ -50,6 +50,20 @@ func TestServer(t *testing.T) {
 			expectedCode: http.StatusInternalServerError,
 			expectedBody: "",
 		},
+		{
+			method:       http.MethodGet,
+			path:         "/api/user/urls",
+			requestBody:  `[{"short_url": "http://localhost:8080/2a49568d","original_url": "https://practicum.yandex.kz/"}]`,
+			expectedCode: http.StatusOK,
+			expectedBody: "",
+		},
+		{
+			method:       http.MethodGet,
+			path:         "/api/user/urls",
+			requestBody:  ``,
+			expectedCode: http.StatusNoContent,
+			expectedBody: "",
+		},
 	}
 
 	options := &config.Options{
@@ -99,6 +113,16 @@ func TestServer(t *testing.T) {
 		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/", "1")})).
 		Return(err).
 		AnyTimes()
+	rm.
+		EXPECT().
+		GetAllUsers(gomock.Any()).
+		Return([]models.ShortenURL{models.NewShortURL("https://practicum.kz/", "1")}, nil).
+		Times(1)
+	rm.
+		EXPECT().
+		GetAllUsers(gomock.Any()).
+		Return([]models.ShortenURL{}, err).
+		Times(1)
 	sh := NewRouter(options, &store)
 
 	//for i, tc := range testCases {

@@ -111,3 +111,20 @@ func TestInFileStorage_StoreBatch(t *testing.T) {
 	assert.NoError(t, err, "Batch value insertion not failed")
 	_ = os.Remove("/tmp/.test_store")
 }
+
+func TestInFileStorage_GetAllUsers(t *testing.T) {
+	fs := NewInFileStorage("/tmp/.test_store")
+	defer fs.Close()
+	shortURLs := map[string]models.ShortenURL{
+		"test1": models.NewShortURL("test", "1"),
+		"test2": models.NewShortURL("test", "1"),
+	}
+	fs.state = shortURLs
+
+	ctx := context.WithValue(context.Background(), auth.ContextUserKey, "1")
+	data, err := fs.GetAllUsers(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, []models.ShortenURL{models.NewShortURL("test", "1"), models.NewShortURL("test", "1")}, data, "Found message scanned correctly")
+	assert.NoError(t, err, "Batch value insertion not failed")
+	_ = os.Remove("/tmp/.test_store")
+}
