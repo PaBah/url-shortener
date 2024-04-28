@@ -140,10 +140,10 @@ func (ds *DBStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string)
 
 		for data := range shortURLCh {
 
-			shortUrl, err := ds.FindByID(context.Background(), data)
+			shortURL, err := ds.FindByID(context.Background(), data)
 			var result string
-			if err == nil && shortUrl.UserID == userID {
-				result = shortUrl.UUID
+			if err == nil && shortURL.UserID == userID {
+				result = shortURL.UUID
 			}
 
 			addRes <- result

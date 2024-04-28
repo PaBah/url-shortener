@@ -65,10 +65,10 @@ func (fs *InFileStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan str
 
 		for data := range shortURLCh {
 
-			shortUrl, err := fs.FindByID(context.Background(), data)
+			shortURL, err := fs.FindByID(context.Background(), data)
 			var result string
-			if err == nil && shortUrl.UserID == userID {
-				result = shortUrl.UUID
+			if err == nil && shortURL.UserID == userID {
+				result = shortURL.UUID
 			}
 
 			addRes <- result
