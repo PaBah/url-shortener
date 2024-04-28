@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"net/http"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type key int
@@ -17,8 +19,7 @@ func PublicAuthorizationMiddleware(next http.Handler) http.Handler {
 		authCookie, err := r.Cookie("Authorization")
 
 		if err != nil || authCookie == nil {
-			//userID = uuid.NewV4().String()
-			userID = "48c01326-079e-4092-a903-b994a5b62b21"
+			userID = uuid.NewV4().String()
 			JWTToken, err := BuildJWTString(userID)
 			if err != nil {
 				http.Error(w, "Can not build auth token", http.StatusInternalServerError)
