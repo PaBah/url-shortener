@@ -35,6 +35,34 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AsyncCheckURLsUserID mocks base method.
+func (m *MockRepository) AsyncCheckURLsUserID(usedID string, shortURL chan string) chan string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AsyncCheckURLsUserID", usedID, shortURL)
+	ret0, _ := ret[0].(chan string)
+	return ret0
+}
+
+// AsyncCheckURLsUserID indicates an expected call of AsyncCheckURLsUserID.
+func (mr *MockRepositoryMockRecorder) AsyncCheckURLsUserID(usedID, shortURL interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AsyncCheckURLsUserID", reflect.TypeOf((*MockRepository)(nil).AsyncCheckURLsUserID), usedID, shortURL)
+}
+
+// DeleteShortURLs mocks base method.
+func (m *MockRepository) DeleteShortURLs(ctx context.Context, shortURLs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteShortURLs", ctx, shortURLs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteShortURLs indicates an expected call of DeleteShortURLs.
+func (mr *MockRepositoryMockRecorder) DeleteShortURLs(ctx, shortURLs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteShortURLs", reflect.TypeOf((*MockRepository)(nil).DeleteShortURLs), ctx, shortURLs)
+}
+
 // FindByID mocks base method.
 func (m *MockRepository) FindByID(ctx context.Context, ID string) (models.ShortenURL, error) {
 	m.ctrl.T.Helper()

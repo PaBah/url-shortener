@@ -16,6 +16,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type DBStorage struct {
@@ -98,16 +99,17 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 }
 
 func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
-	row := ds.db.QueryRowContext(ctx, `SELECT url, user_id FROM urls WHERE short_url=$1`, ID)
+	row := ds.db.QueryRowContext(ctx, `SELECT url, user_id, is_deleted FROM urls WHERE short_url=$1`, ID)
 	var URL string
 	var userID string
-	err = row.Scan(&URL, &userID)
+	var deletedFlag bool
+	err = row.Scan(&URL, &userID, &deletedFlag)
 
 	if err != nil {
 		return
 	}
 
-	shortURL = models.NewShortURL(URL, userID)
+	shortURL = models.ShortenURL{OriginalURL: URL, UUID: ID, UserID: userID, DeletedFlag: deletedFlag}
 	return
 }
 func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
@@ -128,6 +130,31 @@ func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.Shorte
 		}
 		shortURLs = append(shortURLs, shortURL)
 	}
+	return
+}
+
+func (ds *DBStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string) chan string {
+	addRes := make(chan string)
+	go func() {
+		defer close(addRes)
+
+		for data := range shortURLCh {
+
+			shortUrl, err := ds.FindByID(context.Background(), data)
+			var result string
+			if err == nil && shortUrl.UserID == userID {
+				result = shortUrl.UUID
+			}
+
+			addRes <- result
+		}
+	}()
+	return addRes
+}
+
+func (ds *DBStorage) DeleteShortURLs(ctx context.Context, shortURLs []string) (err error) {
+	_, err = ds.db.ExecContext(ctx, `UPDATE urls SET is_deleted = TRUE WHERE urls.short_url = ANY($1)`, pq.Array(shortURLs))
+
 	return
 }
 

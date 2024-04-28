@@ -26,14 +26,14 @@ func TestDBStorage_FindByID(t *testing.T) {
 	ds := &DBStorage{
 		db: db,
 	}
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT url, user_id FROM urls WHERE short_url=$1")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT url, user_id, is_deleted FROM urls WHERE short_url=$1")).
 		WithArgs("test").
-		WillReturnRows(sqlmock.NewRows([]string{"short_url", "user_id"}).
-			AddRow("test", 1))
+		WillReturnRows(sqlmock.NewRows([]string{"short_url", "user_id", "is_deleted"}).
+			AddRow("test", 1, false))
 
 	Data, err := ds.FindByID(context.Background(), "test")
 	assert.NoError(t, err)
-	assert.Equal(t, models.NewShortURL("test", "1"), Data, "Found message scanned correctly")
+	assert.Equal(t, models.ShortenURL{UUID: "test", OriginalURL: "test", UserID: "1", DeletedFlag: false}, Data, "Found message scanned correctly")
 }
 
 func TestDBStorage_FindByID_with_Error(t *testing.T) {

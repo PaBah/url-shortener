@@ -58,6 +58,34 @@ func (fs *InFileStorage) StoreBatch(ctx context.Context, shortURLs map[string]mo
 	return
 }
 
+func (fs *InFileStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string) chan string {
+	addRes := make(chan string)
+	go func() {
+		defer close(addRes)
+
+		for data := range shortURLCh {
+
+			shortUrl, err := fs.FindByID(context.Background(), data)
+			var result string
+			if err == nil && shortUrl.UserID == userID {
+				result = shortUrl.UUID
+			}
+
+			addRes <- result
+		}
+	}()
+	return addRes
+}
+
+func (fs *InFileStorage) DeleteShortURLs(ctx context.Context, shortURLs []string) (err error) {
+	for _, shortURL := range shortURLs {
+		shortenedURL := fs.state[shortURL]
+		shortenedURL.DeletedFlag = true
+		fs.state[shortURL] = shortenedURL
+	}
+	return
+}
+
 func (fs *InFileStorage) initialize(filePath string) {
 	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 

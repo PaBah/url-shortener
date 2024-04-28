@@ -15,6 +15,12 @@ func AuthorizedMiddleware(next http.Handler) http.Handler {
 		}
 
 		userID := GetUserID(authCookie.Value)
+
+		if userID == "" {
+			http.Error(w, "Unauthorized requests forbidden", http.StatusUnauthorized)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), ContextUserKey, userID)
 
 		next.ServeHTTP(w, r.WithContext(ctx))

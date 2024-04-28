@@ -9,6 +9,7 @@ type ShortenURL struct {
 	UUID        string `json:"uuid"`
 	UserID      string `json:"user_id"`
 	OriginalURL string `json:"original_URL"`
+	DeletedFlag bool   `json:"is_deleted"`
 }
 
 func NewShortURL(originalURL string, userID string) ShortenURL {

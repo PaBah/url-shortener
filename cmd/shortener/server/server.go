@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/PaBah/url-shortener.git/internal/async"
 	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/dto"
@@ -29,6 +30,10 @@ func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
 
 	shortenURL, _ := s.storage.FindByID(req.Context(), shortID)
+	if shortenURL.DeletedFlag {
+		res.WriteHeader(http.StatusGone)
+		return
+	}
 	http.Redirect(res, req, shortenURL.OriginalURL, http.StatusTemporaryRedirect)
 }
 
@@ -197,6 +202,31 @@ func (s Server) apiUsersUrlsHandle(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s Server) apiDeleteUsersUrlsHandle(res http.ResponseWriter, req *http.Request) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	requestData := dto.DeleteURLsRequest{}
+	err = json.Unmarshal(body, &requestData)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	inputCh := async.BulkDeletionDataGenerator(requestData)
+
+	userID := req.Context().Value(auth.ContextUserKey).(string)
+
+	channels := async.DeletionFanOut(userID, s.storage, inputCh)
+	addResultCh := async.DeletionFanIn(channels...)
+	async.Delete(s.storage, addResultCh)
+
+	res.WriteHeader(http.StatusAccepted)
+}
+
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -223,6 +253,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthorizedMiddleware)
 		r.Get("/api/user/urls", s.apiUsersUrlsHandle)
+		r.Delete("/api/user/urls", s.apiDeleteUsersUrlsHandle)
 	})
 	return r
 }
