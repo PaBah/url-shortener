@@ -64,6 +64,20 @@ func TestServer(t *testing.T) {
 			expectedCode: http.StatusNoContent,
 			expectedBody: "",
 		},
+		{
+			method:       http.MethodDelete,
+			path:         "/api/user/urls",
+			requestBody:  ``,
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "",
+		},
+		{
+			method:       http.MethodDelete,
+			path:         "/api/user/urls",
+			requestBody:  `["test"]`,
+			expectedCode: http.StatusAccepted,
+			expectedBody: "",
+		},
 	}
 
 	options := &config.Options{
@@ -123,6 +137,10 @@ func TestServer(t *testing.T) {
 		GetAllUsers(gomock.Any()).
 		Return([]models.ShortenURL{}, err).
 		Times(1)
+	rm.
+		EXPECT().
+		AsyncCheckURLsUserID(gomock.Eq("1"), gomock.Any()).
+		Return(make(chan string)).AnyTimes()
 	sh := NewRouter(options, &store)
 
 	//for i, tc := range testCases {
