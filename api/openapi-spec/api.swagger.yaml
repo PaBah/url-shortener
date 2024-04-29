@@ -5,11 +5,18 @@ info:
   description: A sample API of service which can shorten URLs
 servers:
   - url: http://localhost:8080
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
 paths:
   /:
     post:
       summary: Create shortened URL for send data
       description: Receive data, build for it short URL and send in response
+      security: []
       requestBody:
         required: true
         content:
@@ -34,10 +41,16 @@ paths:
               schema:
                 type: string
                 example: http://localhost:8080/2a49568d
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: Authorization=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTQzNDAyMzAsIlVzZXJJRCI6IjQ4YzAxMzI2LTA3OWUtNDA5Mi1hOTAzLWI5OTRhNWI2MmIyMSJ9.rCSqGK2mHfplQesPYh6y5NDkE-ZjGvXOj9CKiBusy7U; Path=/
   /{shortenedUrlUUID}:
     get:
       summary: Process shortened URL to original one propose
       description: Seek in Storage record with UUID `shortenedUrlUUID` and redirect to original URL
+      security: [ ]
       parameters:
         - in: path
           name: shortenedUrlUUID
@@ -49,10 +62,13 @@ paths:
           description: Redirected to original URL
         '400':
           description: Bad request
+        '410':
+          description: Gone, this URL was deleted by it's owner 
   /api/shorten:
     post:
       summary: Create shortened URL for send data
       description: Receive data, build for it short URL and send in response
+      security: [ ]
       requestBody:
         required: true
         content:
@@ -86,11 +102,17 @@ paths:
                   result:
                     type: string
                     example: http://localhost:8080/2a49568d
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: Authorization=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTQzNDAyMzAsIlVzZXJJRCI6IjQ4YzAxMzI2LTA3OWUtNDA5Mi1hOTAzLWI5OTRhNWI2MmIyMSJ9.rCSqGK2mHfplQesPYh6y5NDkE-ZjGvXOj9CKiBusy7U; Path=/
 
   /ping:
     get:
       summary: Allows to check if DB connected correctly
       description: Make PingContex for DB DSN
+      security: [ ]
       responses:
         '200':
           description: Everything is fine
@@ -100,6 +122,7 @@ paths:
     post:
       summary: Create shortened URL for list of send urls
       description: Make shortening and save to storage each URL from list
+      security: [ ]
       requestBody:
         required: true
         content:
@@ -133,3 +156,56 @@ paths:
                       example: http://localhost:8080/2a49568d
         '400':
           description: Bad request
+
+  /api/user/urls:
+    get:
+      summary: Returns all URLs which user ever creates
+      description: Gets user's ID from cookie and select all URLs with ShortenURL.UserID equal to userID
+      security:
+        - cookieAuth: [ ]
+      responses:
+        '200':
+          description: Short URLs successfully found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    original_url:
+                      type: string
+                      example: https://practicum.yandex.kz
+                    short_url:
+                      type: string
+                      example: http://localhost:8080/2a49568d
+    delete:
+      summary: Async deletion of all user's URLs
+      description: Async check if URL belong to User
+      security:
+        - cookieAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                example: aef12d
+      responses:
+        '202':
+          description: Everything is fine systems starts deletion
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    original_url:
+                      type: string
+                      example: https://practicum.yandex.kz
+                    short_url:
+                      type: string
+                      example: http://localhost:8080/2a49568d
