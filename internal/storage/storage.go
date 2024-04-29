@@ -12,5 +12,8 @@ var ErrConflict = errors.New("data conflict")
 type Repository interface {
 	Store(ctx context.Context, shortURL models.ShortenURL) (err error)
 	FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error)
+	GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error)
 	StoreBatch(ctx context.Context, shortURLsMap map[string]models.ShortenURL) (err error)
+	AsyncCheckURLsUserID(usedID string, shortURL chan string) chan string
+	DeleteShortURLs(ctx context.Context, shortURLs []string) (err error)
 }

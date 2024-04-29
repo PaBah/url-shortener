@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"slices"
 	"time"
 
 	"github.com/PaBah/url-shortener.git/db"
+	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -15,6 +17,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type DBStorage struct {
@@ -49,7 +52,7 @@ func (ds *DBStorage) initialize(ctx context.Context, databaseDSN string) (err er
 
 func (ds *DBStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err error) {
 	_, DBerr := ds.db.ExecContext(ctx,
-		`INSERT INTO urls(short_url, url) VALUES ($1, $2)`, shortURL.UUID, shortURL.OriginalURL)
+		`INSERT INTO urls(short_url, url, user_id) VALUES ($1, $2, $3)`, shortURL.UUID, shortURL.OriginalURL, shortURL.UserID)
 
 	var pgErr *pgconn.PgError
 	if errors.As(DBerr, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -85,7 +88,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 		if !slices.Contains(shortURLs, shortURL.UUID) {
 			shortURLs = append(shortURLs, shortURL.UUID)
 			_, err = tx.ExecContext(ctx,
-				"INSERT INTO urls (short_url, url) VALUES($1, $2)", shortURL.UUID, shortURL.OriginalURL)
+				"INSERT INTO urls (short_url, url, user_id) VALUES($1, $2, $3)", shortURL.UUID, shortURL.OriginalURL, shortURL.UserID)
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				_ = tx.Rollback()
@@ -97,15 +100,64 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 }
 
 func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
-	row := ds.db.QueryRowContext(ctx, `SELECT url FROM urls WHERE short_url=$1`, ID)
+	row := ds.db.QueryRowContext(ctx, `SELECT url, user_id, is_deleted FROM urls WHERE short_url=$1`, ID)
 	var URL string
-	err = row.Scan(&URL)
+	var userID string
+	var deletedFlag bool
+	err = row.Scan(&URL, &userID, &deletedFlag)
 
 	if err != nil {
 		return
 	}
 
-	shortURL = models.NewShortURL(URL)
+	shortURL = models.ShortenURL{OriginalURL: URL, UUID: ID, UserID: userID, DeletedFlag: deletedFlag}
+	return
+}
+func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
+	var rows *sql.Rows
+	rows, err = ds.db.QueryContext(ctx, `SELECT url, short_url, user_id FROM urls WHERE user_id=$1`, ctx.Value(auth.ContextUserKey).(string))
+	if err != nil {
+		return
+	}
+	err = rows.Err()
+	defer rows.Close()
+
+	shortURLs = make([]models.ShortenURL, 0)
+	for rows.Next() {
+		var shortURL models.ShortenURL
+		err = rows.Scan(&shortURL.OriginalURL, &shortURL.UUID, &shortURL.UserID)
+		if err != nil {
+			return nil, err
+		}
+		shortURLs = append(shortURLs, shortURL)
+	}
+	return
+}
+
+func (ds *DBStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string) chan string {
+	addRes := make(chan string)
+	go func() {
+		defer close(addRes)
+
+		for data := range shortURLCh {
+
+			shortURL, err := ds.FindByID(context.Background(), data)
+			var result string
+			fmt.Println("shortURL", shortURL)
+			fmt.Println("err", err)
+			if err == nil && shortURL.UserID == userID {
+				result = shortURL.UUID
+			}
+
+			addRes <- result
+		}
+	}()
+	return addRes
+}
+
+func (ds *DBStorage) DeleteShortURLs(ctx context.Context, shortURLs []string) (err error) {
+	_, err = ds.db.ExecContext(ctx, `UPDATE urls SET is_deleted = TRUE WHERE urls.short_url = ANY($1)`, pq.Array(shortURLs))
+
 	return
 }
 

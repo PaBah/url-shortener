@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/mock"
 	"github.com/PaBah/url-shortener.git/internal/models"
@@ -49,6 +50,34 @@ func TestServer(t *testing.T) {
 			expectedCode: http.StatusInternalServerError,
 			expectedBody: "",
 		},
+		{
+			method:       http.MethodGet,
+			path:         "/api/user/urls",
+			requestBody:  `[{"short_url": "http://localhost:8080/2a49568d","original_url": "https://practicum.yandex.kz/"}]`,
+			expectedCode: http.StatusOK,
+			expectedBody: "",
+		},
+		{
+			method:       http.MethodGet,
+			path:         "/api/user/urls",
+			requestBody:  ``,
+			expectedCode: http.StatusNoContent,
+			expectedBody: "",
+		},
+		{
+			method:       http.MethodDelete,
+			path:         "/api/user/urls",
+			requestBody:  ``,
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "",
+		},
+		{
+			method:       http.MethodDelete,
+			path:         "/api/user/urls",
+			requestBody:  `["test"]`,
+			expectedCode: http.StatusAccepted,
+			expectedBody: "",
+		},
 	}
 
 	options := &config.Options{
@@ -64,49 +93,67 @@ func TestServer(t *testing.T) {
 
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.ru/"))).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.ru/", "1"))).
 		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq(models.NewShortURL("http://prjdzevto8.yandex"))).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("http://prjdzevto8.yandex", "1"))).
 		Return(storage.ErrConflict).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2187b119").
-		Return(models.NewShortURL("https://practicum.yandex.ru/"), nil).
+		Return(models.NewShortURL("https://practicum.yandex.ru/", "1"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.kz/"))).
+		Store(gomock.Any(), gomock.Eq(models.NewShortURL("https://practicum.yandex.kz/", "1"))).
 		Return(nil).
 		AnyTimes()
 	rm.
 		EXPECT().
 		FindByID(gomock.Any(), "2a49568d").
-		Return(models.NewShortURL("https://practicum.yandex.kz/"), nil).
+		Return(models.NewShortURL("https://practicum.yandex.kz/", "1"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/")})).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/", "1")})).
 		Return(nil).
 		AnyTimes()
 	err := errors.New("Error")
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/")})).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.kz/", "1")})).
 		Return(err).
 		AnyTimes()
+	rm.
+		EXPECT().
+		GetAllUsers(gomock.Any()).
+		Return([]models.ShortenURL{models.NewShortURL("https://practicum.kz/", "1")}, nil).
+		Times(1)
+	rm.
+		EXPECT().
+		GetAllUsers(gomock.Any()).
+		Return([]models.ShortenURL{}, err).
+		Times(1)
+	rm.
+		EXPECT().
+		AsyncCheckURLsUserID(gomock.Eq("1"), gomock.Any()).
+		Return(make(chan string)).AnyTimes()
 	sh := NewRouter(options, &store)
 
+	//for i, tc := range testCases {
 	for _, tc := range testCases {
 		t.Run(tc.method, func(t *testing.T) {
+
 			r := httptest.NewRequest(tc.method, tc.path, nil)
 			if tc.requestBody != "" {
 				r = httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.requestBody))
 			}
 			w := httptest.NewRecorder()
+			JWTToken, _ := auth.BuildJWTString("1")
+			r.Header.Set("Cookie", "Authorization="+JWTToken)
 
 			sh.ServeHTTP(w, r)
 
