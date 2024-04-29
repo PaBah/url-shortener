@@ -1,1 +1,1 @@
-ALTER TABLE urls DROP COLUMN IF EXISTS is_deleted;
+ALTER TABLE urls DROP COLUMN is_deleted;

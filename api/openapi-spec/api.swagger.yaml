@@ -63,7 +63,7 @@ paths:
         '400':
           description: Bad request
         '410':
-          description: Gone, this URL was deleted by it's owner 
+          description: Gone, this URL was deleted by it's owner
   /api/shorten:
     post:
       summary: Create shortened URL for send data
