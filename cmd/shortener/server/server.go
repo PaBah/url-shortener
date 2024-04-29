@@ -170,7 +170,7 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 		return
 	}
 }
-func (s Server) apiUsersUrlsHandle(res http.ResponseWriter, req *http.Request) {
+func (s Server) userUrlsHandle(res http.ResponseWriter, req *http.Request) {
 	shortURLs, err := s.storage.GetAllUsers(req.Context())
 	if err != nil {
 		res.WriteHeader(http.StatusNoContent)
@@ -252,7 +252,7 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	})
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthorizedMiddleware)
-		r.Get("/api/user/urls", s.apiUsersUrlsHandle)
+		r.Get("/api/user/urls", s.userUrlsHandle)
 		r.Delete("/api/user/urls", s.apiDeleteUsersUrlsHandle)
 	})
 	return r
