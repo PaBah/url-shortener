@@ -160,3 +160,31 @@ func TestDBStorage_GetAllUsers(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []models.ShortenURL{models.ShortenURL{UUID: "test", OriginalURL: "url", UserID: "test"}}, Data, "Found message scanned correctly")
 }
+
+func TestDBStorage_AsyncCheckURLsUserID(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	ds := &DBStorage{
+		db: db,
+	}
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT url, user_id, is_deleted FROM urls WHERE short_url=$1")).
+		WithArgs("test").
+		WillReturnRows(sqlmock.NewRows([]string{"url", "user_id", "is_deleted"}).
+			AddRow("url", "test", false))
+	shortURLCh := make(chan string)
+	res := ds.AsyncCheckURLsUserID("test", shortURLCh)
+	shortURLCh <- "test"
+	assert.Equal(t, <-res, "test", "check was successful")
+}
+
+func TestDBStorage_DeleteShortURLs(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	ds := &DBStorage{
+		db: db,
+	}
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE urls SET is_deleted = TRUE WHERE urls.short_url = ANY($1)`)).
+		WithArgs(sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1)).
+		WillReturnError(nil)
+	err := ds.DeleteShortURLs(context.Background(), []string{"test"})
+	assert.NoError(t, err, "successfully deleted urls")
+}

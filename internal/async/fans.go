@@ -32,7 +32,6 @@ func DeletionFanIn(resultChs ...chan string) chan string {
 			defer wg.Done()
 
 			for data := range chClosure {
-
 				finalCh <- data
 			}
 		}()

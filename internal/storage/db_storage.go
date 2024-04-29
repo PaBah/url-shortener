@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"slices"
 	"time"
 
@@ -142,6 +143,8 @@ func (ds *DBStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string)
 
 			shortURL, err := ds.FindByID(context.Background(), data)
 			var result string
+			fmt.Println("shortURL", shortURL)
+			fmt.Println("err", err)
 			if err == nil && shortURL.UserID == userID {
 				result = shortURL.UUID
 			}

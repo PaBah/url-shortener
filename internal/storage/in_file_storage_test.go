@@ -128,3 +128,29 @@ func TestInFileStorage_GetAllUsers(t *testing.T) {
 	assert.NoError(t, err, "Batch value insertion not failed")
 	_ = os.Remove("/tmp/.test_store")
 }
+
+func TestInFileStorage_AsyncCheckURLsUserID(t *testing.T) {
+	fs := NewInFileStorage("/tmp/.test_store")
+	defer fs.Close()
+	shortURLs := map[string]models.ShortenURL{
+		"bc2c0be9": models.NewShortURL("test", "test"),
+	}
+	fs.state = shortURLs
+	shortURLCh := make(chan string)
+	res := fs.AsyncCheckURLsUserID("test", shortURLCh)
+	shortURLCh <- "bc2c0be9"
+	assert.Equal(t, <-res, "bc2c0be9", "check was successful")
+	_ = os.Remove("/tmp/.test_store")
+}
+
+func TestInFileStorage_DeleteShortURLs(t *testing.T) {
+	fs := NewInFileStorage("/tmp/.test_store")
+	defer fs.Close()
+	shortURLs := map[string]models.ShortenURL{
+		"bc2c0be9": models.NewShortURL("test", "test"),
+	}
+	fs.state = shortURLs
+	err := fs.DeleteShortURLs(context.Background(), []string{"test"})
+	assert.NoError(t, err, "successfully deleted urls")
+	_ = os.Remove("/tmp/.test_store")
+}
