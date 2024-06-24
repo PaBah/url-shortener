@@ -185,7 +185,7 @@ func (s Server) UserUrlsHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var responseData []dto.UsersURLsResponse
+	responseData := make([]dto.UsersURLsResponse, len(shortURLs))
 	for _, shortURL := range shortURLs {
 		responseData = append(responseData, dto.UsersURLsResponse{
 			OriginalURL: shortURL.OriginalURL,

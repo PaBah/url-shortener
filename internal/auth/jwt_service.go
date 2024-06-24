@@ -34,11 +34,8 @@ func BuildJWTString(userID string) (string, error) {
 	})
 
 	tokenString, err := token.SignedString([]byte(SecretKey))
-	if err != nil {
-		return "", err
-	}
 
-	return tokenString, nil
+	return tokenString, err
 }
 
 // GetUserID - parse JWT string and return UserID
