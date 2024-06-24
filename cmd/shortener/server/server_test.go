@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -161,4 +162,17 @@ func TestServer(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ExampleNewRouter() {
+	options := &config.Options{}
+
+	var store storage.Repository
+	dbStore, _ := storage.NewDBStorage(context.Background(), options.DatabaseDSN)
+	store = &dbStore
+	defer dbStore.Close()
+
+	newServer := NewRouter(options, &store)
+
+	http.ListenAndServe(options.ServerAddress, newServer)
 }
