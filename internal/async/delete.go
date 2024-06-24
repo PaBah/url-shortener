@@ -6,6 +6,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/storage"
 )
 
+// Delete - async deletion of URLs
 func Delete(repository storage.Repository, inputCh chan string) {
 	deletionBatchSize := 10
 	go func() {

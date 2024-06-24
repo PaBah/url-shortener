@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 )
 
+// ShortenURL - model entity of shortened URL
 type ShortenURL struct {
 	UUID        string `json:"uuid"`
 	UserID      string `json:"user_id"`
@@ -12,6 +13,7 @@ type ShortenURL struct {
 	DeletedFlag bool   `json:"is_deleted"`
 }
 
+// NewShortURL - create  instance of ShortenURL
 func NewShortURL(originalURL string, userID string) ShortenURL {
 	return ShortenURL{UUID: buildID(originalURL), OriginalURL: originalURL, UserID: userID}
 }

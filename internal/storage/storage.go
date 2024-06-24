@@ -7,8 +7,10 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/models"
 )
 
+// ErrConflict - error when user tries to save already existing data
 var ErrConflict = errors.New("data conflict")
 
+// Repository - interface over Repository pattern for system storage
 type Repository interface {
 	Store(ctx context.Context, shortURL models.ShortenURL) (err error)
 	FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error)

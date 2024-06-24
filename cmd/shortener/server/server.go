@@ -21,12 +21,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// Server - entity which presents application server
 type Server struct {
 	options *config.Options
 	storage storage.Repository
 }
 
-func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
+// GetShortURLHandle - handler for list user's shortened URLs
+func (s Server) GetShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	shortID := chi.URLParam(req, "id")
 
 	shortenURL, _ := s.storage.FindByID(req.Context(), shortID)
@@ -37,7 +39,8 @@ func (s Server) getShortURLHandle(res http.ResponseWriter, req *http.Request) {
 	http.Redirect(res, req, shortenURL.OriginalURL, http.StatusTemporaryRedirect)
 }
 
-func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
+// PostURLHandle - handler for shortening URL
+func (s Server) PostURLHandle(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -58,13 +61,14 @@ func (s Server) postURLHandle(res http.ResponseWriter, req *http.Request) {
 
 	_, err = res.Write([]byte(shortenedURL))
 	if err != nil {
-		logger.Log().Error("Can not send response from postURLHandle:", zap.Error(err))
+		logger.Log().Error("Can not send response from PostURLHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
+// APIShortenHandle - handler for shortening URL via API
+func (s Server) APIShortenHandle(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -101,13 +105,14 @@ func (s Server) apiShortenHandle(res http.ResponseWriter, req *http.Request) {
 
 	_, err = res.Write(response)
 	if err != nil {
-		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
+		logger.Log().Error("Can not send response from APIShortenHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s Server) pingHandle(res http.ResponseWriter, req *http.Request) {
+// PingHandle - handler for checking if DB is working
+func (s Server) PingHandle(res http.ResponseWriter, req *http.Request) {
 	dbStorage, ok := s.storage.(*storage.DBStorage)
 	if !ok {
 		http.Error(res, "Service working not on top DB storage", http.StatusInternalServerError)
@@ -120,7 +125,8 @@ func (s Server) pingHandle(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request) {
+// APIShortenBatchHandle - handler for creation of list of short URLs
+func (s Server) APIShortenBatchHandle(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -165,12 +171,14 @@ func (s Server) apiShortenBatchHandle(res http.ResponseWriter, req *http.Request
 	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write(response)
 	if err != nil {
-		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
+		logger.Log().Error("Can not send response from APIShortenHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
-func (s Server) userUrlsHandle(res http.ResponseWriter, req *http.Request) {
+
+// UserUrlsHandle - handler for list of short URLs of authorized user
+func (s Server) UserUrlsHandle(res http.ResponseWriter, req *http.Request) {
 	shortURLs, err := s.storage.GetAllUsers(req.Context())
 	if err != nil {
 		res.WriteHeader(http.StatusNoContent)
@@ -196,13 +204,14 @@ func (s Server) userUrlsHandle(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 	_, err = res.Write(response)
 	if err != nil {
-		logger.Log().Error("Can not send response from apiShortenHandle:", zap.Error(err))
+		logger.Log().Error("Can not send response from APIShortenHandle:", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s Server) apiDeleteUsersUrlsHandle(res http.ResponseWriter, req *http.Request) {
+// APIDeleteUsersUrlsHandle - handler for delete short URLs
+func (s Server) APIDeleteUsersUrlsHandle(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -227,6 +236,7 @@ func (s Server) apiDeleteUsersUrlsHandle(res http.ResponseWriter, req *http.Requ
 	res.WriteHeader(http.StatusAccepted)
 }
 
+// NewRouter - creates instance of Server
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -239,11 +249,11 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Use(auth.PublicAuthorizationMiddleware)
-		r.Post("/", s.postURLHandle)
-		r.Get("/{id}", s.getShortURLHandle)
-		r.Get("/ping", s.pingHandle)
-		r.Post("/api/shorten", s.apiShortenHandle)
-		r.Post("/api/shorten/batch", s.apiShortenBatchHandle)
+		r.Post("/", s.PostURLHandle)
+		r.Get("/{id}", s.GetShortURLHandle)
+		r.Get("/ping", s.PingHandle)
+		r.Post("/api/shorten", s.APIShortenHandle)
+		r.Post("/api/shorten/batch", s.APIShortenBatchHandle)
 		r.MethodNotAllowed(
 			func(writer http.ResponseWriter, request *http.Request) {
 				writer.WriteHeader(http.StatusBadRequest)
@@ -252,8 +262,8 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	})
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthorizedMiddleware)
-		r.Get("/api/user/urls", s.userUrlsHandle)
-		r.Delete("/api/user/urls", s.apiDeleteUsersUrlsHandle)
+		r.Get("/api/user/urls", s.UserUrlsHandle)
+		r.Delete("/api/user/urls", s.APIDeleteUsersUrlsHandle)
 	})
 	return r
 }
