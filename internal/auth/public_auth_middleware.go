@@ -10,7 +10,7 @@ import (
 type key int
 
 const (
-	ContextUserKey key = iota // UserID's key in context map
+	ContextUserKey key = iota // ContextUserKey - UserID's key in context map
 )
 
 // PublicAuthorizationMiddleware - authorize Users via cookie when they make request to public URLs

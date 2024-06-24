@@ -16,8 +16,8 @@ type Claims struct {
 }
 
 const (
-	TokenExp  = time.Hour * 3
-	SecretKey = "supersecretkey"
+	TokenExp  = time.Hour * 3    // TokenExp - JWT token expiration time in microseconds
+	SecretKey = "supersecretkey" // SecretKey - key for JWT encryption
 )
 
 // BuildJWTString - generate JWT string from UserID

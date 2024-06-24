@@ -236,6 +236,7 @@ func (s Server) APIDeleteUsersUrlsHandle(res http.ResponseWriter, req *http.Requ
 	res.WriteHeader(http.StatusAccepted)
 }
 
+// NewRouter - creates instance of Server
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
 
