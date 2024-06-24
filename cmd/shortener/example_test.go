@@ -9,7 +9,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/storage"
 )
 
-func ExampleNewRouter() {
+func Example() {
 	options := &config.Options{}
 
 	var store storage.Repository
