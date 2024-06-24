@@ -19,24 +19,25 @@ type (
 	}
 )
 
+// Write - logs responses
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
 	return size, err
 }
 
+// WriteHeader - logs responses' headers
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode
 }
 
-//var Log *zap.Logger = zap.NewNop()
-
+// Log - returns actual logger
 func Log() *zap.Logger {
 	return zap.L()
 }
 
-// Initialize инициализирует синглтон логера с необходимым уровнем логирования.
+// Initialize - initialize logger singleton with defined log level
 func Initialize(level string) error {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
@@ -52,7 +53,7 @@ func Initialize(level string) error {
 	return nil
 }
 
-// LoggerMiddleware — middleware-логер для входящих HTTP-запросов.
+// LoggerMiddleware — middleware-logger for inbound HTTP-requests
 func LoggerMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

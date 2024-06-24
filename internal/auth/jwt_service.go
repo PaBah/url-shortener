@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Claims - present JWT claims (customised with UserID)
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
@@ -19,6 +20,7 @@ const (
 	SecretKey = "supersecretkey"
 )
 
+// BuildJWTString - generate JWT string from UserID
 func BuildJWTString(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,6 +37,7 @@ func BuildJWTString(userID string) (string, error) {
 	return tokenString, nil
 }
 
+// GetUserID - parse JWT string and return UserID
 func GetUserID(tokenString string) string {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,

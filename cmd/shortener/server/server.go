@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Server - entity which presents application server
 type Server struct {
 	options *config.Options
 	storage storage.Repository

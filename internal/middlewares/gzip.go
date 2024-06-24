@@ -21,10 +21,12 @@ func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	}
 }
 
+// Header - returns http.Header
 func (c *compressWriter) Header() http.Header {
 	return c.writer.Header()
 }
 
+// Write - write HTTP response body
 func (c *compressWriter) Write(p []byte) (int, error) {
 	written, err := c.zipWriter.Write(p)
 	if err == nil {
@@ -33,6 +35,7 @@ func (c *compressWriter) Write(p []byte) (int, error) {
 	return written, err
 }
 
+// WriteHeader - write HTTP response Header
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
 		c.writer.Header().Set("Content-Encoding", "gzip")
@@ -40,12 +43,11 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 	c.writer.WriteHeader(statusCode)
 }
 
-// Close закрывает gzip.Writer и досылает все данные из буфера.
+// Close - close gzip.Writer and send rest from buffer
 func (c *compressWriter) Close() error {
 	return c.zipWriter.Close()
 }
 
-// compressReader реализует интерфейс io.ReadCloser и позволяет прозрачно для сервера
 type compressReader struct {
 	readCloser io.ReadCloser
 	zipReader  *gzip.Reader
@@ -63,10 +65,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read - read compressed request body
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zipReader.Read(p)
 }
 
+// Close - close compress reader
 func (c *compressReader) Close() error {
 	if err := c.readCloser.Close(); err != nil {
 		return err
@@ -74,6 +78,7 @@ func (c *compressReader) Close() error {
 	return c.zipReader.Close()
 }
 
+// GzipMiddleware - middleware for compress request/responses processing
 func GzipMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		originalWriter := w
