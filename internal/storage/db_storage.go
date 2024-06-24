@@ -20,6 +20,7 @@ import (
 	"github.com/lib/pq"
 )
 
+// DBStorage - model of Repository storage on top of Data Base
 type DBStorage struct {
 	db *sql.DB
 }
@@ -50,6 +51,7 @@ func (ds *DBStorage) initialize(ctx context.Context, databaseDSN string) (err er
 	return
 }
 
+// Store - stores shortened URL in DB
 func (ds *DBStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err error) {
 	_, DBerr := ds.db.ExecContext(ctx,
 		`INSERT INTO urls(short_url, url, user_id) VALUES ($1, $2, $3)`, shortURL.UUID, shortURL.OriginalURL, shortURL.UserID)
@@ -62,6 +64,7 @@ func (ds *DBStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err
 	return
 }
 
+// StoreBatch - stores batch of shortened URLs in DB
 func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]models.ShortenURL) (err error) {
 	rows, err := ds.db.QueryContext(ctx, `SELECT short_url FROM urls`)
 	if err != nil {
@@ -99,6 +102,7 @@ func (ds *DBStorage) StoreBatch(ctx context.Context, shortURLsMap map[string]mod
 	return tx.Commit()
 }
 
+// FindByID - filter and returns shortened URL by short ID
 func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
 	row := ds.db.QueryRowContext(ctx, `SELECT url, user_id, is_deleted FROM urls WHERE short_url=$1`, ID)
 	var URL string
@@ -113,6 +117,8 @@ func (ds *DBStorage) FindByID(ctx context.Context, ID string) (shortURL models.S
 	shortURL = models.ShortenURL{OriginalURL: URL, UUID: ID, UserID: userID, DeletedFlag: deletedFlag}
 	return
 }
+
+// GetAllUsers - returns all shortened URLs of the User from context
 func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
 	var rows *sql.Rows
 	rows, err = ds.db.QueryContext(ctx, `SELECT url, short_url, user_id FROM urls WHERE user_id=$1`, ctx.Value(auth.ContextUserKey).(string))
@@ -134,6 +140,7 @@ func (ds *DBStorage) GetAllUsers(ctx context.Context) (shortURLs []models.Shorte
 	return
 }
 
+// AsyncCheckURLsUserID - async checking if URL belongs to the User from context
 func (ds *DBStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string) chan string {
 	addRes := make(chan string)
 	go func() {
@@ -155,12 +162,14 @@ func (ds *DBStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string)
 	return addRes
 }
 
+// DeleteShortURLs - delete shortened URLs from Data Base
 func (ds *DBStorage) DeleteShortURLs(ctx context.Context, shortURLs []string) (err error) {
 	_, err = ds.db.ExecContext(ctx, `UPDATE urls SET is_deleted = TRUE WHERE urls.short_url = ANY($1)`, pq.Array(shortURLs))
 
 	return
 }
 
+// Ping - check if connection to Data Base is fine
 func (ds *DBStorage) Ping(ctx context.Context) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
@@ -168,10 +177,12 @@ func (ds *DBStorage) Ping(ctx context.Context) error {
 	return ds.db.PingContext(ctxWithTimeout)
 }
 
+// Close - close connection to Data Base
 func (ds *DBStorage) Close() error {
 	return ds.db.Close()
 }
 
+// NewDBStorage - create instance of DBStorage
 func NewDBStorage(ctx context.Context, databaseDSN string) (DBStorage, error) {
 	store := DBStorage{}
 	err := store.initialize(ctx, databaseDSN)

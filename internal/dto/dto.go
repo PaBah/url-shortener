@@ -1,5 +1,6 @@
 package dto
 
+// Data Transfer Objects for Server handlers
 type (
 	// ShortenRequest - request params for /api/shorten handler
 	ShortenRequest struct {
