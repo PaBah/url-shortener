@@ -15,6 +15,7 @@ type Claims struct {
 	UserID string
 }
 
+// Parameters for JWT tokens generation/parsing
 const (
 	// TokenExp - JWT token expiration time in microseconds
 	TokenExp = time.Hour * 3
