@@ -9,6 +9,7 @@ import (
 
 type key int
 
+// Params for authorization context storing
 const (
 	// ContextUserKey - UserID's key in context map
 	ContextUserKey key = iota
