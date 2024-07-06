@@ -45,14 +45,22 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unsafeptr"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
 	"golang.org/x/tools/go/analysis/passes/unusedwrite"
+
+	"honnef.co/go/tools/simple"
 	"honnef.co/go/tools/staticcheck"
 )
 
-func main() {
-	checkers := make([]*analysis.Analyzer, 0, 132)
+func getCheckers() (checkers []*analysis.Analyzer) {
+	checkers = make([]*analysis.Analyzer, 0, 133)
 
 	for _, v := range staticcheck.Analyzers {
 		if v.Analyzer.Name[:2] == "SA" || v.Analyzer.Name == "S1030" {
+			checkers = append(checkers, v.Analyzer)
+		}
+	}
+
+	for _, v := range simple.Analyzers {
+		if v.Analyzer.Name == "S1030" {
 			checkers = append(checkers, v.Analyzer)
 		}
 	}
@@ -103,5 +111,9 @@ func main() {
 
 		analyzers.OSExitFromMainAnalyzer,
 	)
-	multichecker.Main(checkers...)
+	return checkers
+}
+
+func main() {
+	multichecker.Main(getCheckers()...)
 }
