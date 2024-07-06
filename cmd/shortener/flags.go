@@ -7,6 +7,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/config"
 )
 
+// ParseFlags - initializer system configuration
 func ParseFlags(options *config.Options) {
 	var specified bool
 	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN string

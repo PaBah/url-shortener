@@ -2,6 +2,7 @@ package async
 
 import "github.com/PaBah/url-shortener.git/internal/dto"
 
+// BulkDeletionDataGenerator - initiate shortened URLs batch deletion process via generation through channels
 func BulkDeletionDataGenerator(input dto.DeleteURLsRequest) chan string {
 	inputCh := make(chan string)
 

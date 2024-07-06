@@ -9,10 +9,13 @@ import (
 
 type key int
 
+// Params for authorization context storing
 const (
+	// ContextUserKey - UserID's key in context map
 	ContextUserKey key = iota
 )
 
+// PublicAuthorizationMiddleware - authorize Users via cookie when they make request to public URLs
 func PublicAuthorizationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var userID string

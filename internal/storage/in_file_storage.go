@@ -13,11 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// InFileStorage - model of Repository storage on top of file
 type InFileStorage struct {
 	state map[string]models.ShortenURL
 	file  *os.File
 }
 
+// Store - stores shortened URL to internal field
 func (fs *InFileStorage) Store(ctx context.Context, shortURL models.ShortenURL) (err error) {
 	_, duplicate := fs.state[shortURL.UUID]
 	if duplicate {
@@ -27,6 +29,7 @@ func (fs *InFileStorage) Store(ctx context.Context, shortURL models.ShortenURL) 
 	return
 }
 
+// FindByID - filter and returns shortened URL by short ID
 func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (shortURL models.ShortenURL, err error) {
 	var found bool
 	shortURL, found = fs.state[ID]
@@ -36,6 +39,7 @@ func (fs *InFileStorage) FindByID(ctx context.Context, ID string) (shortURL mode
 	return
 }
 
+// GetAllUsers - returns all shortened URLs of the User from context
 func (fs *InFileStorage) GetAllUsers(ctx context.Context) (shortURLs []models.ShortenURL, err error) {
 	shortURLs = make([]models.ShortenURL, 0)
 	for _, shortURL := range fs.state {
@@ -51,6 +55,7 @@ func (fs *InFileStorage) GetAllUsers(ctx context.Context) (shortURLs []models.Sh
 	return
 }
 
+// StoreBatch - stores batch of shortened URLs in internal field
 func (fs *InFileStorage) StoreBatch(ctx context.Context, shortURLs map[string]models.ShortenURL) (err error) {
 	for _, shortURL := range shortURLs {
 		fs.state[shortURL.UUID] = shortURL
@@ -58,6 +63,7 @@ func (fs *InFileStorage) StoreBatch(ctx context.Context, shortURLs map[string]mo
 	return
 }
 
+// AsyncCheckURLsUserID - async checking if URL belongs to the User from context
 func (fs *InFileStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan string) chan string {
 	addRes := make(chan string)
 	go func() {
@@ -77,6 +83,7 @@ func (fs *InFileStorage) AsyncCheckURLsUserID(userID string, shortURLCh chan str
 	return addRes
 }
 
+// DeleteShortURLs - delete shortened URLs from Data Base
 func (fs *InFileStorage) DeleteShortURLs(ctx context.Context, shortURLs []string) (err error) {
 	for _, shortURL := range shortURLs {
 		shortenedURL := fs.state[shortURL]
@@ -112,6 +119,7 @@ func (fs *InFileStorage) writeBackup() error {
 	return nil
 }
 
+// Close - close file
 func (fs *InFileStorage) Close() error {
 	err := fs.writeBackup()
 	if err != nil {
@@ -120,6 +128,7 @@ func (fs *InFileStorage) Close() error {
 	return fs.file.Close()
 }
 
+// NewInFileStorage - create instance of InFileStorage
 func NewInFileStorage(filePath string) InFileStorage {
 	store := InFileStorage{}
 	store.initialize(filePath)
