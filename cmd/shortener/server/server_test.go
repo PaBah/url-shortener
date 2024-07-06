@@ -143,10 +143,8 @@ func TestServer(t *testing.T) {
 		Return(make(chan string)).AnyTimes()
 	sh := NewRouter(options, &store)
 
-	//for i, tc := range testCases {
 	for _, tc := range testCases {
 		t.Run(tc.method, func(t *testing.T) {
-
 			r := httptest.NewRequest(tc.method, tc.path, nil)
 			if tc.requestBody != "" {
 				r = httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.requestBody))

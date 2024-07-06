@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -153,4 +154,17 @@ func TestInFileStorage_DeleteShortURLs(t *testing.T) {
 	err := fs.DeleteShortURLs(context.Background(), []string{"test"})
 	assert.NoError(t, err, "successfully deleted urls")
 	_ = os.Remove("/tmp/.test_store")
+}
+
+func BenchmarkInFileStorage_StoreBatch(b *testing.B) {
+	fs := NewInFileStorage("/tmp/.test_store")
+	defer fs.Close()
+	for i := 0; i < b.N; i++ {
+		testFirst, testSecond := fmt.Sprintf("%d%s", i, "test"), fmt.Sprintf("%d%s", i, "2test")
+		shortURLs := map[string]models.ShortenURL{
+			testFirst:  models.NewShortURL("test", "1"),
+			testSecond: models.NewShortURL("test", "1"),
+		}
+		_ = fs.StoreBatch(context.Background(), shortURLs)
+	}
 }
