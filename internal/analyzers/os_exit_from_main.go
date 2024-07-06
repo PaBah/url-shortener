@@ -7,6 +7,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
+// OSExitFromMainAnalyzer - analyzer which check if os.Exit() call ever appeared in func main() in package main
 var OSExitFromMainAnalyzer = &analysis.Analyzer{
 	Name:     "osexitfrommain",
 	Doc:      "check if os.Exit() call ever appeared in func main() in package main",
