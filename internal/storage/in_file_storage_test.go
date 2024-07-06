@@ -54,8 +54,8 @@ func TestInFileStorage_Store(t *testing.T) {
 	tests := []struct {
 		name     string
 		state    map[string]models.ShortenURL
-		value    models.ShortenURL
 		wantData string
+		value    models.ShortenURL
 	}{
 		{
 			name:     "With initialed store",
