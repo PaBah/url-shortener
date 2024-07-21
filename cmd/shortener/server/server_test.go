@@ -19,12 +19,12 @@ import (
 func TestServer(t *testing.T) {
 	// описываем набор данных: метод запроса, ожидаемый код ответа, ожидаемое тело
 	testCases := []struct {
+		storage      storage.Repository
 		method       string
 		requestBody  string
 		path         string
-		expectedCode int
 		expectedBody string
-		storage      storage.Repository
+		expectedCode int
 	}{
 		{method: http.MethodPost, path: "/", requestBody: "https://practicum.yandex.ru/", expectedCode: http.StatusCreated, expectedBody: "http://localhost:8080/2187b119"},
 		{method: http.MethodPost, path: "/", requestBody: "http://prjdzevto8.yandex", expectedCode: http.StatusConflict, expectedBody: "http://localhost:8080/a033a480"},
