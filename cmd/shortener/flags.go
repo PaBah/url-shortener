@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
@@ -27,9 +25,8 @@ func isFlagPassed(name string) bool {
 func ParseFlags(options *config.Options) {
 	var specified bool
 	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath string
-	_, b, _, _ := runtime.Caller(0)
 
-	flag.StringVar(&configFilePath, "c", filepath.Join(filepath.Dir(b), "../..")+"/config.json", "path to config file")
+	flag.StringVar(&configFilePath, "c", "", "path to config file")
 	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
 	flag.StringVar(&options.BaseURL, "b", "http://localhost:8080", "URL for of shortened URLs hosting")
 	flag.StringVar(&options.DatabaseDSN, "d", "host=localhost user=paulbahush dbname=urlshortener password=", "database DSN address")
