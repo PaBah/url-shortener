@@ -36,7 +36,6 @@ func ParseFlags(options *config.Options) {
 	var fileConfig config.Options
 	if configFilePath != "" {
 		file, err := os.Open(configFilePath)
-		defer file.Close()
 		if err == nil {
 			err = json.NewDecoder(file).Decode(&fileConfig)
 			if err == nil {
@@ -56,6 +55,10 @@ func ParseFlags(options *config.Options) {
 					options.EnableHTTPS = fileConfig.EnableHTTPS
 				}
 			}
+		}
+		err = file.Close()
+		if err != nil {
+			return
 		}
 	}
 
