@@ -1,7 +1,7 @@
 {
-  "server_address": ":8080",
-  "base_url": "http://localhost:8080",
-  "file_storage_path": "/tmp/short-url-db.json",
-  "database_dsn": "host=localhost user=paulbahush dbname=urlshortener password=",
+  "server_address": ":8081",
+  "base_url": "http://localhost:8081",
+  "file_storage_path": "/tmp/short-url-db.db",
+  "database_dsn": "host=localhost user=paulbahush dbname=urlshortener password=password",
   "enable_https": false
 }
