@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
+	"github.com/PaBah/url-shortener.git/internal/logger"
+	"go.uber.org/zap"
 )
 
 func isFlagPassed(name string) bool {
@@ -24,7 +26,7 @@ func ParseFlags(options *config.Options) {
 	var specified bool
 	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath string
 
-	flag.StringVar(&configFilePath, "c", "", "path to config file")
+	flag.StringVar(&configFilePath, "c", "/Users/paulbahush/projects/yp/url-shortener/config.json", "path to config file")
 	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
 	flag.StringVar(&options.BaseURL, "b", "http://localhost:8080", "URL for of shortened URLs hosting")
 	flag.StringVar(&options.DatabaseDSN, "d", "host=localhost user=paulbahush dbname=urlshortener password=", "database DSN address")
@@ -38,6 +40,12 @@ func ParseFlags(options *config.Options) {
 		file, err := os.Open(configFilePath)
 		if err == nil {
 			err = json.NewDecoder(file).Decode(&fileConfig)
+			defer func(file *os.File) {
+				err = file.Close()
+				if err != nil {
+					logger.Log().Error("can not close file", zap.Error(err))
+				}
+			}(file)
 			if err == nil {
 				if !isFlagPassed("a") {
 					options.ServerAddress = fileConfig.ServerAddress
@@ -55,10 +63,6 @@ func ParseFlags(options *config.Options) {
 					options.EnableHTTPS = fileConfig.EnableHTTPS
 				}
 			}
-		}
-		err = file.Close()
-		if err != nil {
-			return
 		}
 	}
 
