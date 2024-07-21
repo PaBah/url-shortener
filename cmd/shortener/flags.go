@@ -24,12 +24,12 @@ func ParseFlags(options *config.Options) {
 	var specified bool
 	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath string
 
-	flag.StringVar(&configFilePath, "c", "config.json", "path to config file")
-	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
-	flag.StringVar(&options.BaseURL, "b", "http://localhost:8080", "URL for of shortened URLs hosting")
-	flag.StringVar(&options.DatabaseDSN, "d", "host=localhost user=paulbahush dbname=urlshortener password=", "database DSN address")
+	flag.StringVar(&configFilePath, "c", "/Users/paulbahush/projects/yp/url-shortener/config.json", "path to config file")
+	flag.StringVar(&options.ServerAddress, "a", "", "host:port on which server run")
+	flag.StringVar(&options.BaseURL, "b", "", "URL for of shortened URLs hosting")
+	flag.StringVar(&options.DatabaseDSN, "d", "", "database DSN address")
 	flag.StringVar(&options.LogsLevel, "l", "info", "logs level")
-	flag.StringVar(&options.FileStoragePath, "f", "/tmp/short-url-db.json", "path to file.json with file storage data")
+	flag.StringVar(&options.FileStoragePath, "f", "", "path to file.json with file storage data")
 	flag.BoolVar(&options.EnableHTTPS, "s", false, "enable-https")
 	flag.Parse()
 
@@ -37,9 +37,9 @@ func ParseFlags(options *config.Options) {
 		var fileConfig config.Options
 		file, err := os.Open(configFilePath)
 		defer file.Close()
-		if err != nil {
+		if err == nil {
 			err = json.NewDecoder(file).Decode(&fileConfig)
-			if err != nil {
+			if err == nil {
 				if !isFlagPassed("a") {
 					options.ServerAddress = fileConfig.ServerAddress
 				}

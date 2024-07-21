@@ -1,0 +1,7 @@
+{
+  "server_address": ":8080",
+  "base_url": "http://localhost:8080",
+  "file_storage_path": "/tmp/short-url-db.json",
+  "database_dsn": "host=localhost user=paulbahush dbname=urlshortener password=",
+  "enable_https": false
+}
