@@ -28,7 +28,6 @@ func TestParseFlags(t *testing.T) {
 				os.Setenv("LOG_LEVEL", tt.envValues[2])
 				os.Setenv("FILE_STORAGE_PATH", tt.envValues[3])
 				os.Setenv("DATABASE_DSN", tt.envValues[4])
-				os.Setenv("ENABLE_HTTPS", tt.envValues[4])
 			}
 			ParseFlags(options)
 			assert.Equal(t, options.ServerAddress, tt.expectedValue[0], "Правльно распаршеный SERVER_ADDRESS")
