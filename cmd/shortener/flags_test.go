@@ -16,8 +16,8 @@ func TestParseFlags(t *testing.T) {
 	}{
 		{
 			name:          "got from ENV",
-			expectedValue: []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test"},
-			envValues:     []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test"}},
+			expectedValue: []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test", "true"},
+			envValues:     []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test", "true"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -28,6 +28,7 @@ func TestParseFlags(t *testing.T) {
 				os.Setenv("LOG_LEVEL", tt.envValues[2])
 				os.Setenv("FILE_STORAGE_PATH", tt.envValues[3])
 				os.Setenv("DATABASE_DSN", tt.envValues[4])
+				os.Setenv("ENABLE_HTTPS", tt.envValues[4])
 			}
 			ParseFlags(options)
 			assert.Equal(t, options.ServerAddress, tt.expectedValue[0], "Правльно распаршеный SERVER_ADDRESS")

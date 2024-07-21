@@ -55,12 +55,7 @@ func main() {
 	defer stop()
 
 	go func() {
-		//err := http.ListenAndServe(options.ServerAddress, newServer)
-		//if err != nil {
-		//	logger.Log().Error("Server crashed with error: ", zap.Error(err))
-		//}
-
-		if options.EnableHTTPS != "" {
+		if options.EnableHTTPS {
 			const (
 				certFilePath = "cert.pem" // certFilePath - path to TLS certificate
 				keyFilePath  = "key.pem"  // keyFilePath - path to TLS key
