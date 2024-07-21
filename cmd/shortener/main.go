@@ -11,6 +11,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
+	"github.com/PaBah/url-shortener.git/internal/tls"
 	"go.uber.org/zap"
 )
 
@@ -54,9 +55,25 @@ func main() {
 	defer stop()
 
 	go func() {
-		err := http.ListenAndServe(options.ServerAddress, newServer)
+		//err := http.ListenAndServe(options.ServerAddress, newServer)
+		//if err != nil {
+		//	logger.Log().Error("Server crashed with error: ", zap.Error(err))
+		//}
 
-		if err != nil {
+		if options.EnableHTTPS != "" {
+			const (
+				certFilePath = "cert.pem" // certFilePath - path to TLS certificate
+				keyFilePath  = "key.pem"  // keyFilePath - path to TLS key
+			)
+			err = tls.CreateTLSCert(certFilePath, keyFilePath)
+			if err != nil {
+				logger.Log().Error("Certificate creation error: ", zap.Error(err))
+			}
+			err = http.ListenAndServeTLS(options.ServerAddress, certFilePath, keyFilePath, newServer)
+		} else {
+			err = http.ListenAndServe(options.ServerAddress, newServer)
+		}
+		if err != nil && err != http.ErrServerClosed {
 			logger.Log().Error("Server crashed with error: ", zap.Error(err))
 		}
 	}()
