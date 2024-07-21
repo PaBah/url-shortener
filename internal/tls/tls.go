@@ -29,17 +29,9 @@ func CreateTLSCert(certPath string, keyPath string) error {
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		return err
-	}
-
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
-	if err != nil {
-		return err
-	}
-
-	err = writeCypherToFile(certPath, "CERTIFICATE", certBytes)
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	certBytes, _ := x509.CreateCertificate(rand.Reader, cert, cert, &privateKey.PublicKey, privateKey)
+	err := writeCypherToFile(certPath, "CERTIFICATE", certBytes)
 	if err != nil {
 		return err
 	}
@@ -58,25 +50,15 @@ func writeCypherToFile(filePath string, cypherType string, cypher []byte) error 
 		file *os.File
 	)
 
-	err := pem.Encode(&buf, &pem.Block{
+	_ = pem.Encode(&buf, &pem.Block{
 		Type:  cypherType,
 		Bytes: cypher,
 	})
 
-	if err != nil {
-		return err
-	}
+	file, _ = os.Create(filePath)
+	defer file.Close()
 
-	file, err = os.Create(filePath)
-	if err != nil {
-		return err
-	}
-
-	_, err = buf.WriteTo(file)
-	if err != nil {
-		return err
-	}
-	err = file.Close()
+	_, err := buf.WriteTo(file)
 	if err != nil {
 		return err
 	}
