@@ -11,6 +11,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
+	"github.com/PaBah/url-shortener.git/internal/tls"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +25,6 @@ func main() {
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
-
 	options := &config.Options{}
 	ParseFlags(options)
 
@@ -54,10 +54,18 @@ func main() {
 	defer stop()
 
 	go func() {
-		err := http.ListenAndServe(options.ServerAddress, newServer)
-
+		if options.EnableHTTPS {
+			const (
+				certFilePath = "cert.pem" // certFilePath - path to TLS certificate
+				keyFilePath  = "key.pem"  // keyFilePath - path to TLS key
+			)
+			err = tls.CreateTLSCert(certFilePath, keyFilePath)
+			err = http.ListenAndServeTLS(options.ServerAddress, certFilePath, keyFilePath, newServer)
+		} else {
+			err = http.ListenAndServe(options.ServerAddress, newServer)
+		}
 		if err != nil {
-			logger.Log().Error("Server crashed with error: ", zap.Error(err))
+			logger.Log().Fatal("Error starting server", zap.Error(err))
 		}
 	}()
 

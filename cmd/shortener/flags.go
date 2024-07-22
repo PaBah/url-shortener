@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"strconv"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
 )
@@ -10,13 +11,14 @@ import (
 // ParseFlags - initializer system configuration
 func ParseFlags(options *config.Options) {
 	var specified bool
-	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN string
+	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS string
 
 	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
 	flag.StringVar(&options.BaseURL, "b", "http://localhost:8080", "URL for of shortened URLs hosting")
 	flag.StringVar(&options.DatabaseDSN, "d", "host=localhost user=paulbahush dbname=urlshortener password=", "database DSN address")
 	flag.StringVar(&options.LogsLevel, "l", "info", "logs level")
 	flag.StringVar(&options.FileStoragePath, "f", "/tmp/short-url-db.json", "path to file.json with file storage data")
+	flag.BoolVar(&options.EnableHTTPS, "s", false, "enable-https")
 	flag.Parse()
 
 	serverAddress, specified = os.LookupEnv("SERVER_ADDRESS")
@@ -42,5 +44,10 @@ func ParseFlags(options *config.Options) {
 	databaseDSN, specified = os.LookupEnv("DATABASE_DSN")
 	if specified {
 		options.DatabaseDSN = databaseDSN
+	}
+
+	enableHTTPS, specified = os.LookupEnv("ENABLE_HTTPS")
+	if specified {
+		options.EnableHTTPS, _ = strconv.ParseBool(enableHTTPS)
 	}
 }
