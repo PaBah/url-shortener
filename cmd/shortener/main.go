@@ -50,7 +50,7 @@ func main() {
 
 	logger.Log().Info("Start server on", zap.String("address", options.ServerAddress))
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
 	go func() {
