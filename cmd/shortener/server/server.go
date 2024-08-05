@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -236,6 +237,33 @@ func (s Server) APIDeleteUsersUrlsHandle(res http.ResponseWriter, req *http.Requ
 	res.WriteHeader(http.StatusAccepted)
 }
 
+// APIInternalStatsHandle - handler to check internal service stats
+func (s Server) APIInternalStatsHandle(res http.ResponseWriter, req *http.Request) {
+	urls, users, err := s.storage.GetStats(req.Context())
+	if err != nil {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	responseData := dto.StatsResponse{Users: users, Urls: urls}
+
+	res.Header().Set("Content-Type", "application/json")
+	response, err := json.Marshal(responseData)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.WriteHeader(http.StatusOK)
+	_, err = res.Write(response)
+	if err != nil {
+		logger.Log().Error("Can not send response from APIInternalStatsHandle:", zap.Error(err))
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 // NewRouter - creates instance of Server
 func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 	r := chi.NewRouter()
@@ -265,5 +293,16 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		r.Get("/api/user/urls", s.UserUrlsHandle)
 		r.Delete("/api/user/urls", s.APIDeleteUsersUrlsHandle)
 	})
+	if options.TrustedSubnet != "" {
+		_, trustedNet, err := net.ParseCIDR(options.TrustedSubnet)
+		if err != nil {
+			logger.Log().Error("can not parse subnet", zap.Error(err))
+		}
+
+		r.Group(func(r chi.Router) {
+			r.Use(middlewares.IPWhiteListMiddleware(trustedNet))
+			r.Get("/api/internal/stats", s.APIInternalStatsHandle)
+		})
+	}
 	return r
 }

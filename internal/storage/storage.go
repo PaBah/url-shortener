@@ -18,4 +18,5 @@ type Repository interface {
 	StoreBatch(ctx context.Context, shortURLsMap map[string]models.ShortenURL) (err error)
 	AsyncCheckURLsUserID(usedID string, shortURL chan string) chan string
 	DeleteShortURLs(ctx context.Context, shortURLs []string) (err error)
+	GetStats(ctx context.Context) (urls int, users int, err error)
 }
