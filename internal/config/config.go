@@ -8,4 +8,5 @@ type Options struct {
 	FileStoragePath string `json:"file_storage_path"` // FileStoragePath - path to file where InFileStorage
 	EnableHTTPS     bool   `json:"enable_https"`      // EnableHTTPS - flag to enable HTTPS server mode
 	DatabaseDSN     string `json:"database_dsn"`      // DatabaseDSN - DSN path for DB connection
+	TrustedSubnet   string `json:"trusted_subnet"`    // TrustedSubnet - CIDR address of allowed subnet
 }

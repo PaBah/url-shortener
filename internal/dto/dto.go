@@ -24,10 +24,16 @@ type (
 		ShortURL      string `json:"short_url"`
 	}
 
-	// UsersURLsResponse - response params for api/user/urls handlers
+	// UsersURLsResponse - response params for /api/user/urls handlers
 	UsersURLsResponse struct {
 		ShortURL    string `json:"short_url"`
 		OriginalURL string `json:"original_url"`
+	}
+
+	// StatsResponse - response params for /api/internal/stats handlers
+	StatsResponse struct {
+		Users int `json:"users"`
+		Urls  int `json:"urls"`
 	}
 
 	// DeleteURLsRequest - request params for shortened URLs deletion handlers
