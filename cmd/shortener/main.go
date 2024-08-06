@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -12,7 +14,9 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/PaBah/url-shortener.git/internal/tls"
+	pb "github.com/PaBah/url-shortener.git/proto"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -47,12 +51,25 @@ func main() {
 	}
 
 	newServer := server.NewRouter(options, &store)
+	newGRPCServer := server.NewShortenerServer(options, &store)
 
 	logger.Log().Info("Start server on", zap.String("address", options.ServerAddress))
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
+	go func() {
+		listen, err := net.Listen("tcp", ":3200")
+		if err != nil {
+			log.Fatal(err)
+		}
+		s := grpc.NewServer()
+		pb.RegisterShortenerServer(s, newGRPCServer)
+
+		if err := s.Serve(listen); err != nil {
+			log.Fatal(err)
+		}
+	}()
 	go func() {
 		if options.EnableHTTPS {
 			const (
