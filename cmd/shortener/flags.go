@@ -24,7 +24,7 @@ func isFlagPassed(name string) bool {
 // ParseFlags - initializer system configuration
 func ParseFlags(options *config.Options) {
 	var specified bool
-	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath string
+	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath, trustedSubnet string
 
 	flag.StringVar(&configFilePath, "c", "", "path to config file")
 	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
@@ -32,6 +32,7 @@ func ParseFlags(options *config.Options) {
 	flag.StringVar(&options.DatabaseDSN, "d", "host=localhost user=paulbahush dbname=urlshortener password=", "database DSN address")
 	flag.StringVar(&options.LogsLevel, "l", "info", "logs level")
 	flag.StringVar(&options.FileStoragePath, "f", "/tmp/short-url-db.json", "path to file.json with file storage data")
+	flag.StringVar(&options.TrustedSubnet, "t", "", "CIDR address of allowed subnet")
 	flag.BoolVar(&options.EnableHTTPS, "s", false, "enable-https")
 	flag.Parse()
 
@@ -62,6 +63,9 @@ func ParseFlags(options *config.Options) {
 				if !isFlagPassed("s") {
 					options.EnableHTTPS = fileConfig.EnableHTTPS
 				}
+				if !isFlagPassed("t") {
+					options.TrustedSubnet = fileConfig.TrustedSubnet
+				}
 			}
 		}
 	}
@@ -89,6 +93,11 @@ func ParseFlags(options *config.Options) {
 	databaseDSN, specified = os.LookupEnv("DATABASE_DSN")
 	if specified {
 		options.DatabaseDSN = databaseDSN
+	}
+
+	trustedSubnet, specified = os.LookupEnv("TRUSTED_SUBNET")
+	if specified {
+		options.TrustedSubnet = trustedSubnet
 	}
 
 	enableHTTPS, specified = os.LookupEnv("ENABLE_HTTPS")

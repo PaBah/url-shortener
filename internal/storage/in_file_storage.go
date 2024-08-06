@@ -93,6 +93,18 @@ func (fs *InFileStorage) DeleteShortURLs(ctx context.Context, shortURLs []string
 	return
 }
 
+// GetStats - return amount of users and amount of url in the system
+func (fs *InFileStorage) GetStats(ctx context.Context) (urls int, users int, err error) {
+	urls = len(fs.state)
+	usersMap := map[string]byte{}
+	for _, shortURL := range fs.state {
+		usersMap[shortURL.UserID] = 1
+	}
+	users = len(usersMap)
+
+	return
+}
+
 func (fs *InFileStorage) initialize(filePath string) {
 	fs.file, _ = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 
