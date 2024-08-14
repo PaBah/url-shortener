@@ -3,6 +3,7 @@ module github.com/PaBah/url-shortener.git
 go 1.21
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/fatih/errwrap v1.6.0
 	github.com/go-chi/chi/v5 v5.0.12
@@ -23,7 +24,6 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/bufbuild/protovalidate-go v0.6.3 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
