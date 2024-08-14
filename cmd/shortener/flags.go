@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
@@ -25,14 +23,11 @@ func isFlagPassed(name string) bool {
 
 // ParseFlags - initializer system configuration
 func ParseFlags(options *config.Options) {
-	_, b, _, _ := runtime.Caller(0)
-	configPath := filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(b))), "config.json")
-
 	var specified bool
 	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath, trustedSubnet string
 	var gRPCAddress string
 
-	flag.StringVar(&configFilePath, "c", configPath, "path to config file")
+	flag.StringVar(&configFilePath, "c", "", "path to config file")
 	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
 	flag.StringVar(&options.GRPCAddress, "g", ":3200", "host:port on which gRPC run")
 	flag.StringVar(&options.BaseURL, "b", "http://localhost:8080", "URL for of shortened URLs hosting")
@@ -44,36 +39,38 @@ func ParseFlags(options *config.Options) {
 	flag.Parse()
 
 	var fileConfig config.Options
-	file, err := os.Open(configFilePath)
-	if err == nil {
-		err = json.NewDecoder(file).Decode(&fileConfig)
-		defer func(file *os.File) {
-			err = file.Close()
-			if err != nil {
-				logger.Log().Error("can not close file", zap.Error(err))
-			}
-		}(file)
+	if configFilePath != "" {
+		file, err := os.Open(configFilePath)
 		if err == nil {
-			if !isFlagPassed("a") {
-				options.ServerAddress = fileConfig.ServerAddress
-			}
-			if !isFlagPassed("b") {
-				options.BaseURL = fileConfig.BaseURL
-			}
-			if !isFlagPassed("d") {
-				options.DatabaseDSN = fileConfig.DatabaseDSN
-			}
-			if !isFlagPassed("f") {
-				options.FileStoragePath = fileConfig.FileStoragePath
-			}
-			if !isFlagPassed("s") {
-				options.EnableHTTPS = fileConfig.EnableHTTPS
-			}
-			if !isFlagPassed("t") {
-				options.TrustedSubnet = fileConfig.TrustedSubnet
-			}
-			if !isFlagPassed("g") {
-				options.GRPCAddress = fileConfig.GRPCAddress
+			err = json.NewDecoder(file).Decode(&fileConfig)
+			defer func(file *os.File) {
+				err = file.Close()
+				if err != nil {
+					logger.Log().Error("can not close file", zap.Error(err))
+				}
+			}(file)
+			if err == nil {
+				if !isFlagPassed("a") {
+					options.ServerAddress = fileConfig.ServerAddress
+				}
+				if !isFlagPassed("b") {
+					options.BaseURL = fileConfig.BaseURL
+				}
+				if !isFlagPassed("d") {
+					options.DatabaseDSN = fileConfig.DatabaseDSN
+				}
+				if !isFlagPassed("f") {
+					options.FileStoragePath = fileConfig.FileStoragePath
+				}
+				if !isFlagPassed("s") {
+					options.EnableHTTPS = fileConfig.EnableHTTPS
+				}
+				if !isFlagPassed("t") {
+					options.TrustedSubnet = fileConfig.TrustedSubnet
+				}
+				if !isFlagPassed("g") {
+					options.GRPCAddress = fileConfig.GRPCAddress
+				}
 			}
 		}
 	}
@@ -102,7 +99,7 @@ func ParseFlags(options *config.Options) {
 	if specified {
 		options.DatabaseDSN = databaseDSN
 	}
-
+	
 	gRPCAddress, specified = os.LookupEnv("GRPC_ADDRESS")
 	if specified {
 		options.GRPCAddress = gRPCAddress
