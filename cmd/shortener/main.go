@@ -18,7 +18,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/PaBah/url-shortener.git/internal/tls"
 
-	pb "github.com/PaBah/url-shortener.git/proto"
+	pb "github.com/PaBah/url-shortener.git/internal/gen/proto/shortener/v1"
 )
 
 var (
