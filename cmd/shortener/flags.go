@@ -99,7 +99,7 @@ func ParseFlags(options *config.Options) {
 	if specified {
 		options.DatabaseDSN = databaseDSN
 	}
-	
+
 	gRPCAddress, specified = os.LookupEnv("GRPC_ADDRESS")
 	if specified {
 		options.GRPCAddress = gRPCAddress
@@ -114,5 +114,4 @@ func ParseFlags(options *config.Options) {
 	if specified {
 		options.EnableHTTPS, _ = strconv.ParseBool(enableHTTPS)
 	}
-
 }

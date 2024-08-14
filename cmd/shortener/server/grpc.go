@@ -26,6 +26,7 @@ type ShortenerServer struct {
 	storage storage.Repository
 }
 
+// Short - handler for shortening URL
 func (s *ShortenerServer) Short(ctx context.Context, in *pb.ShortRequest) (*pb.ShortResponse, error) {
 	response := &pb.ShortResponse{}
 	shortURL := models.NewShortURL(in.Url, in.UserId)
@@ -38,6 +39,7 @@ func (s *ShortenerServer) Short(ctx context.Context, in *pb.ShortRequest) (*pb.S
 	return response, err
 }
 
+// Expand - handler for list user's shortened URLs
 func (s *ShortenerServer) Expand(ctx context.Context, in *pb.ExpandRequest) (*pb.ExpandResponse, error) {
 	response := &pb.ExpandResponse{}
 
@@ -49,6 +51,7 @@ func (s *ShortenerServer) Expand(ctx context.Context, in *pb.ExpandRequest) (*pb
 	return response, nil
 }
 
+// Delete - handler for delete short URLs
 func (s *ShortenerServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*emptypb.Empty, error) {
 	response := new(emptypb.Empty)
 
@@ -61,6 +64,7 @@ func (s *ShortenerServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*em
 	return response, nil
 }
 
+// GetUserBucket - handler for list of short URLs of authorized user
 func (s *ShortenerServer) GetUserBucket(ctx context.Context, in *pb.GetUserBucketRequest) (*pb.GetUserBucketResponse, error) {
 	response := &pb.GetUserBucketResponse{}
 	shortURLs, err := s.storage.GetAllUsers(context.WithValue(ctx, auth.ContextUserKey, in.UserId))
@@ -78,6 +82,7 @@ func (s *ShortenerServer) GetUserBucket(ctx context.Context, in *pb.GetUserBucke
 	return response, nil
 }
 
+// ShortBatch - handler for creation of list of short URLs
 func (s *ShortenerServer) ShortBatch(ctx context.Context, in *pb.ShortBatchRequest) (*pb.ShortBatchResponse, error) {
 	response := &pb.ShortBatchResponse{}
 
@@ -102,6 +107,7 @@ func (s *ShortenerServer) ShortBatch(ctx context.Context, in *pb.ShortBatchReque
 	return response, nil
 }
 
+// Stats - handler to check internal service stats
 func (s *ShortenerServer) Stats(ctx context.Context, in *emptypb.Empty) (*pb.StatsResponse, error) {
 	response := &pb.StatsResponse{}
 	urls, users, err := s.storage.GetStats(ctx)
@@ -115,6 +121,7 @@ func (s *ShortenerServer) Stats(ctx context.Context, in *emptypb.Empty) (*pb.Sta
 	return response, nil
 }
 
+// NewShortenerServer - creates new gRPC server instance
 func NewShortenerServer(options *config.Options, storage *storage.Repository) *ShortenerServer {
 	s := ShortenerServer{
 		options: options,
