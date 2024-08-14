@@ -9,6 +9,7 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,7 +49,6 @@ func TestDBStorage_FindByID_with_Error(t *testing.T) {
 
 	_, err := ds.FindByID(context.Background(), "test")
 	assert.Error(t, err)
-	//assert.Equal(t, models.NewShortURL("test"), Data, "Found message scanned correctly")
 }
 
 func TestDBStorage_Ping(t *testing.T) {
@@ -158,7 +158,7 @@ func TestDBStorage_GetAllUsers(t *testing.T) {
 	ctx := context.WithValue(context.Background(), auth.ContextUserKey, "test")
 	Data, err := ds.GetAllUsers(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, []models.ShortenURL{models.ShortenURL{UUID: "test", OriginalURL: "url", UserID: "test"}}, Data, "Found message scanned correctly")
+	assert.Equal(t, []models.ShortenURL{{UUID: "test", OriginalURL: "url", UserID: "test"}}, Data, "Found message scanned correctly")
 }
 
 func TestDBStorage_AsyncCheckURLsUserID(t *testing.T) {
