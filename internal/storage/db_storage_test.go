@@ -9,7 +9,6 @@ import (
 	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 )
 
