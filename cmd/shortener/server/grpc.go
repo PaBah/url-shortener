@@ -5,13 +5,17 @@ import (
 	"errors"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/PaBah/url-shortener.git/internal/async"
 	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/PaBah/url-shortener.git/internal/storage"
-	pb "github.com/PaBah/url-shortener.git/proto"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+
+	pb "github.com/PaBah/url-shortener.git/internal/gen/proto/shortener/v1"
 )
 
 // ShortenerServer shortener gRPC server
@@ -29,7 +33,7 @@ func (s *ShortenerServer) Short(ctx context.Context, in *pb.ShortRequest) (*pb.S
 
 	response.Result = shortURL.UUID
 	if errors.Is(err, storage.ErrConflict) {
-		return response, err
+		return response, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	return response, err
 }
@@ -39,7 +43,7 @@ func (s *ShortenerServer) Expand(ctx context.Context, in *pb.ExpandRequest) (*pb
 
 	shortenURL, _ := s.storage.FindByID(ctx, in.ShortId)
 	if shortenURL.DeletedFlag {
-		return response, errors.New("shorten URL already expanded")
+		return response, status.Errorf(codes.InvalidArgument, "shorten URL already expanded")
 	}
 	response.Url = shortenURL.OriginalURL
 	return response, nil
@@ -61,11 +65,11 @@ func (s *ShortenerServer) GetUserBucket(ctx context.Context, in *pb.GetUserBucke
 	response := &pb.GetUserBucketResponse{}
 	shortURLs, err := s.storage.GetAllUsers(context.WithValue(ctx, auth.ContextUserKey, in.UserId))
 	if err != nil {
-		return response, err
+		return response, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	for _, shortURL := range shortURLs {
-		response.Pair = append(response.Pair, &pb.Pair{
+		response.Data = append(response.Data, &pb.OriginalAndShort{
 			OriginalUrl: shortURL.OriginalURL,
 			ShortUrl:    fmt.Sprintf("%s/%s", s.options.BaseURL, shortURL.UUID),
 		})
@@ -85,7 +89,7 @@ func (s *ShortenerServer) ShortBatch(ctx context.Context, in *pb.ShortBatchReque
 
 	err := s.storage.StoreBatch(ctx, shortURLsMap)
 	if err != nil {
-		return response, err
+		return response, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	for correlationID, shortenedURL := range shortURLsMap {
@@ -102,7 +106,7 @@ func (s *ShortenerServer) Stats(ctx context.Context, in *emptypb.Empty) (*pb.Sta
 	response := &pb.StatsResponse{}
 	urls, users, err := s.storage.GetStats(ctx)
 	if err != nil {
-		return response, err
+		return response, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	response.Urls = int64(urls)

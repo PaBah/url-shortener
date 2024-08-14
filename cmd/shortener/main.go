@@ -9,14 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+
 	"github.com/PaBah/url-shortener.git/cmd/shortener/server"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/logger"
 	"github.com/PaBah/url-shortener.git/internal/storage"
 	"github.com/PaBah/url-shortener.git/internal/tls"
+
 	pb "github.com/PaBah/url-shortener.git/proto"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
 
 var (
@@ -59,7 +61,7 @@ func main() {
 	defer stop()
 
 	go func() {
-		listen, err := net.Listen("tcp", ":3200")
+		listen, err := net.Listen("tcp", options.GRPCAddress)
 		if err != nil {
 			log.Fatal(err)
 		}

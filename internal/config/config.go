@@ -9,4 +9,5 @@ type Options struct {
 	EnableHTTPS     bool   `json:"enable_https"`      // EnableHTTPS - flag to enable HTTPS server mode
 	DatabaseDSN     string `json:"database_dsn"`      // DatabaseDSN - DSN path for DB connection
 	TrustedSubnet   string `json:"trusted_subnet"`    // TrustedSubnet - CIDR address of allowed subnet
+	GRPCAddress     string `json:"grpc_address"`      // GRPCAddress - address which system use to run gRPC server
 }
