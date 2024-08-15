@@ -208,32 +208,18 @@ func Test_GetUserBucket(t *testing.T) {
 func Test_ShortBatch(t *testing.T) {
 	testCases := []struct {
 		storage        storage.Repository
-		request        pb.ShortBatchRequest
+		request        string
 		expectedError  bool
 		expectedResult string
 		errorCode      codes.Code
 	}{
 		{
-			request: pb.ShortBatchRequest{
-				UserId: "1",
-				Original: []*pb.CorrelatedOriginalURL{
-					&pb.CorrelatedOriginalURL{
-						CorrelationId: "1",
-						OriginalUrl:   "https://practicum.yandex.kz/",
-					},
-				}},
+			request:        "https://practicum.yandex.kz/",
 			expectedError:  false,
 			expectedResult: "http://localhost:8080/2a49568d",
 		},
 		{
-			request: pb.ShortBatchRequest{
-				UserId: "2",
-				Original: []*pb.CorrelatedOriginalURL{
-					&pb.CorrelatedOriginalURL{
-						CorrelationId: "1",
-						OriginalUrl:   "https://practicum.yandex.kz/",
-					},
-				}},
+			request:        "https://practicum.yandex.kz/",
 			expectedError:  true,
 			errorCode:      codes.InvalidArgument,
 			expectedResult: "",
@@ -254,18 +240,25 @@ func Test_ShortBatch(t *testing.T) {
 		EXPECT().
 		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/", "1")})).
 		Return(nil).
-		AnyTimes()
+		Times(1)
 	rm.
 		EXPECT().
-		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/", "2")})).
+		StoreBatch(gomock.Any(), gomock.Eq(map[string]models.ShortenURL{"1": models.NewShortURL("https://practicum.yandex.kz/", "1")})).
 		Return(errors.New("Error")).
-		AnyTimes()
+		Times(1)
 
 	sh := NewShortenerServer(options, &store)
 
 	for _, tc := range testCases {
-		t.Run(tc.request.UserId, func(t *testing.T) {
-			result, err := sh.ShortBatch(context.Background(), &tc.request)
+		t.Run(tc.request, func(t *testing.T) {
+			result, err := sh.ShortBatch(context.Background(), &pb.ShortBatchRequest{
+				UserId: "1",
+				Original: []*pb.CorrelatedOriginalURL{
+					&pb.CorrelatedOriginalURL{
+						CorrelationId: "1",
+						OriginalUrl:   tc.request,
+					},
+				}})
 
 			if tc.expectedError {
 				e, ok := status.FromError(err)
