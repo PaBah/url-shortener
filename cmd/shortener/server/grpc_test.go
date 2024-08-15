@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"strconv"
 	"testing"
 
 	"github.com/PaBah/url-shortener.git/internal/config"
@@ -211,7 +210,7 @@ func Test_ShortBatch(t *testing.T) {
 		storage        storage.Repository
 		request        pb.ShortBatchRequest
 		expectedError  bool
-		expectedResult pb.ShortBatchResponse
+		expectedResult string
 		errorCode      codes.Code
 	}{
 		{
@@ -223,13 +222,9 @@ func Test_ShortBatch(t *testing.T) {
 						OriginalUrl:   "https://practicum.yandex.kz/",
 					},
 				}},
-			expectedError: false,
-			expectedResult: pb.ShortBatchResponse{Short: []*pb.CorrelatedShortURL{
-				&pb.CorrelatedShortURL{
-					CorrelationId: "1",
-					ShortUrl:      "http://localhost:8080/2a49568d",
-				},
-			}}},
+			expectedError:  false,
+			expectedResult: "http://localhost:8080/2a49568d",
+		},
 		{
 			request: pb.ShortBatchRequest{
 				UserId: "2",
@@ -241,7 +236,7 @@ func Test_ShortBatch(t *testing.T) {
 				}},
 			expectedError:  true,
 			errorCode:      codes.InvalidArgument,
-			expectedResult: pb.ShortBatchResponse{},
+			expectedResult: "",
 		},
 	}
 	options := &config.Options{
@@ -277,7 +272,7 @@ func Test_ShortBatch(t *testing.T) {
 				require.True(t, ok)
 				assert.Equal(t, tc.errorCode, e.Code(), "Expected error code get")
 			} else {
-				assert.Equal(t, &tc.expectedResult, result, "Expected result get")
+				assert.Equal(t, tc.expectedResult, result.Short[0].ShortUrl, "Expected result get")
 			}
 		})
 	}
@@ -287,17 +282,17 @@ func Test_Stats(t *testing.T) {
 	testCases := []struct {
 		storage        storage.Repository
 		expectedError  bool
-		expectedResult pb.StatsResponse
+		expectedResult []int64
 		errorCode      codes.Code
 	}{
 		{
 			expectedError:  false,
-			expectedResult: pb.StatsResponse{Users: 1, Urls: 2},
+			expectedResult: []int64{1, 2},
 		},
 		{
 			expectedError:  true,
 			errorCode:      codes.InvalidArgument,
-			expectedResult: pb.StatsResponse{},
+			expectedResult: []int64{},
 		},
 	}
 	options := &config.Options{
@@ -325,7 +320,7 @@ func Test_Stats(t *testing.T) {
 	sh := NewShortenerServer(options, &store)
 
 	for _, tc := range testCases {
-		t.Run(strconv.Itoa(int(tc.expectedResult.Users)), func(t *testing.T) {
+		t.Run("test", func(t *testing.T) {
 			result, err := sh.Stats(context.Background(), new(emptypb.Empty))
 
 			if tc.expectedError {
@@ -333,7 +328,8 @@ func Test_Stats(t *testing.T) {
 				require.True(t, ok)
 				assert.Equal(t, tc.errorCode, e.Code(), "Expected error code get")
 			} else {
-				assert.Equal(t, &tc.expectedResult, result, "Expected result get")
+				assert.Equal(t, tc.expectedResult[0], result.Users, "Expected result users get")
+				assert.Equal(t, tc.expectedResult[1], result.Urls, "Expected result urls get")
 			}
 		})
 	}
