@@ -78,12 +78,19 @@ func TestServer(t *testing.T) {
 			expectedCode: http.StatusAccepted,
 			expectedBody: "",
 		},
+		{
+			method:       http.MethodGet,
+			path:         "/api/internal/stats",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"users":1,"urls":2}`,
+		},
 	}
 
 	options := &config.Options{
 		ServerAddress: ":8080",
 		BaseURL:       "http://localhost:8080",
 		DatabaseDSN:   "wrong DSN",
+		TrustedSubnet: "0.0.0.0/0",
 	}
 
 	var store storage.Repository
@@ -141,6 +148,12 @@ func TestServer(t *testing.T) {
 		EXPECT().
 		AsyncCheckURLsUserID(gomock.Eq("1"), gomock.Any()).
 		Return(make(chan string)).AnyTimes()
+	rm.
+		EXPECT().
+		GetStats(gomock.Any()).
+		Return(2, 1, nil).
+		Times(1)
+
 	sh := NewRouter(options, &store)
 
 	for _, tc := range testCases {
@@ -152,6 +165,7 @@ func TestServer(t *testing.T) {
 			w := httptest.NewRecorder()
 			JWTToken, _ := auth.BuildJWTString("1")
 			r.Header.Set("Cookie", "Authorization="+JWTToken)
+			r.Header.Set("X-Real-IP", "127.0.0.1")
 
 			sh.ServeHTTP(w, r)
 
