@@ -61,5 +61,7 @@ func TestWhitelisting(t *testing.T) {
 		resp, err := http.DefaultClient.Do(r)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+		defer resp.Body.Close()
 	})
 }
