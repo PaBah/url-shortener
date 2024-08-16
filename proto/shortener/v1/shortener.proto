@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
 import "buf/validate/validate.proto";
 
 option go_package = "github.com/PaBah/url-shortener.git/proto";
@@ -26,8 +25,10 @@ message ExpandResponse {
 
 message DeleteRequest {
   string user_id = 1 [(buf.validate.field).string.uuid = true];
-  repeated string id = 2 [(buf.validate.field).string.len = 8];
+  repeated string id = 2 [(buf.validate.field).repeated.items.string.len = 8];
 }
+
+message DeleteResponse {}
 
 message GetUserBucketRequest {
   string user_id = 1 [(buf.validate.field).string.uuid = true];
@@ -61,16 +62,18 @@ message ShortBatchResponse {
   repeated CorrelatedShortURL short = 1;
 }
 
+message StatsRequest{}
+
 message StatsResponse {
   int64 urls = 1;
   int64 users = 2;
 }
 
-service Shortener {
+service ShortenerService {
   rpc Short(ShortRequest) returns (ShortResponse);
   rpc Expand(ExpandRequest) returns (ExpandResponse);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc GetUserBucket(GetUserBucketRequest) returns (GetUserBucketResponse);
   rpc ShortBatch(ShortBatchRequest) returns (ShortBatchResponse);
-  rpc Stats(google.protobuf.Empty) returns (StatsResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
 }

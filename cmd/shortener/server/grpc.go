@@ -5,22 +5,20 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
-
 	"github.com/PaBah/url-shortener.git/internal/async"
 	"github.com/PaBah/url-shortener.git/internal/auth"
 	"github.com/PaBah/url-shortener.git/internal/config"
 	"github.com/PaBah/url-shortener.git/internal/models"
 	"github.com/PaBah/url-shortener.git/internal/storage"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/PaBah/url-shortener.git/internal/gen/proto/shortener/v1"
 )
 
 // ShortenerServer shortener gRPC server
 type ShortenerServer struct {
-	pb.UnimplementedShortenerServer
+	pb.UnimplementedShortenerServiceServer
 
 	options *config.Options
 	storage storage.Repository
@@ -52,8 +50,8 @@ func (s *ShortenerServer) Expand(ctx context.Context, in *pb.ExpandRequest) (*pb
 }
 
 // Delete - handler for delete short URLs
-func (s *ShortenerServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*emptypb.Empty, error) {
-	response := new(emptypb.Empty)
+func (s *ShortenerServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	response := &pb.DeleteResponse{}
 
 	inputCh := async.BulkDeletionDataGenerator(in.Id)
 
@@ -108,7 +106,7 @@ func (s *ShortenerServer) ShortBatch(ctx context.Context, in *pb.ShortBatchReque
 }
 
 // Stats - handler to check internal service stats
-func (s *ShortenerServer) Stats(ctx context.Context, in *emptypb.Empty) (*pb.StatsResponse, error) {
+func (s *ShortenerServer) Stats(ctx context.Context, in *pb.StatsRequest) (*pb.StatsResponse, error) {
 	response := &pb.StatsResponse{}
 	urls, users, err := s.storage.GetStats(ctx)
 	if err != nil {

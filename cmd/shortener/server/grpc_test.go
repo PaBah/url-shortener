@@ -15,7 +15,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func Test_Short(t *testing.T) {
@@ -314,7 +313,7 @@ func Test_Stats(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("test", func(t *testing.T) {
-			result, err := sh.Stats(context.Background(), new(emptypb.Empty))
+			result, err := sh.Stats(context.Background(), &pb.StatsRequest{})
 
 			if tc.expectedError {
 				e, ok := status.FromError(err)
