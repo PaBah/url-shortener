@@ -1,0 +1,16 @@
+name: buf_lint
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  buf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          token: ${{ secrets.BUF_TOKEN }}
+    
