@@ -253,7 +253,7 @@ func Test_ShortBatch(t *testing.T) {
 			result, err := sh.ShortBatch(context.Background(), &pb.ShortBatchRequest{
 				UserId: "1",
 				Original: []*pb.CorrelatedOriginalURL{
-					&pb.CorrelatedOriginalURL{
+					{
 						CorrelationId: "1",
 						OriginalUrl:   tc.request,
 					},
