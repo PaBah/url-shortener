@@ -15,6 +15,5 @@ jobs:
           token: ${{ secrets.BUF_TOKEN }}
       - uses: bufbuild/buf-lint-action@v1
         with:
-          input: proto
           token: ${{ secrets.BUF_TOKEN }}
     
