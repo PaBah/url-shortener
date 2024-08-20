@@ -169,6 +169,13 @@ func (ds *DBStorage) DeleteShortURLs(ctx context.Context, shortURLs []string) (e
 	return
 }
 
+// GetStats - return amount of users and amount of url in the system
+func (ds *DBStorage) GetStats(ctx context.Context) (urls int, users int, err error) {
+	err = ds.db.QueryRowContext(ctx, `SELECT COUNT(id), COUNT(DISTINCT user_id) FROM urls`).Scan(&urls, &users)
+
+	return
+}
+
 // Ping - check if connection to Data Base is fine
 func (ds *DBStorage) Ping(ctx context.Context) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
