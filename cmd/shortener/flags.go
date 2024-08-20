@@ -25,9 +25,11 @@ func isFlagPassed(name string) bool {
 func ParseFlags(options *config.Options) {
 	var specified bool
 	var serverAddress, baseURL, logsLevel, fileStoragePath, databaseDSN, enableHTTPS, configFilePath, trustedSubnet string
+	var gRPCAddress string
 
 	flag.StringVar(&configFilePath, "c", "", "path to config file")
 	flag.StringVar(&options.ServerAddress, "a", ":8080", "host:port on which server run")
+	flag.StringVar(&options.GRPCAddress, "g", ":3200", "host:port on which gRPC run")
 	flag.StringVar(&options.BaseURL, "b", "http://localhost:8080", "URL for of shortened URLs hosting")
 	flag.StringVar(&options.DatabaseDSN, "d", "host=localhost user=paulbahush dbname=urlshortener password=", "database DSN address")
 	flag.StringVar(&options.LogsLevel, "l", "info", "logs level")
@@ -66,6 +68,9 @@ func ParseFlags(options *config.Options) {
 				if !isFlagPassed("t") {
 					options.TrustedSubnet = fileConfig.TrustedSubnet
 				}
+				if !isFlagPassed("g") {
+					options.GRPCAddress = fileConfig.GRPCAddress
+				}
 			}
 		}
 	}
@@ -93,6 +98,11 @@ func ParseFlags(options *config.Options) {
 	databaseDSN, specified = os.LookupEnv("DATABASE_DSN")
 	if specified {
 		options.DatabaseDSN = databaseDSN
+	}
+
+	gRPCAddress, specified = os.LookupEnv("GRPC_ADDRESS")
+	if specified {
+		options.GRPCAddress = gRPCAddress
 	}
 
 	trustedSubnet, specified = os.LookupEnv("TRUSTED_SUBNET")

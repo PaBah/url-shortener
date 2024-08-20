@@ -3,5 +3,7 @@
   "base_url": "http://localhost:8081",
   "file_storage_path": "/tmp/short-url-db.db",
   "database_dsn": "host=localhost user=paulbahush dbname=urlshortener password=password",
-  "enable_https": false
+  "enable_https": false,
+  "trusted_subnet": "0.0.0.0/0",
+  "grpc_address": ":3200"
 }

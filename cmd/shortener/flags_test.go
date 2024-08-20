@@ -16,8 +16,8 @@ func TestParseFlags(t *testing.T) {
 	}{
 		{
 			name:          "got from ENV",
-			expectedValue: []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test", "true"},
-			envValues:     []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test", "true"}},
+			expectedValue: []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test", ":3200", "0.0.0.0/0"},
+			envValues:     []string{":8888", "https://yandex.ru", "info", "/tmp/short-url-db.json", "test", ":3200", "0.0.0.0/0", "true"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -28,6 +28,9 @@ func TestParseFlags(t *testing.T) {
 				os.Setenv("LOG_LEVEL", tt.envValues[2])
 				os.Setenv("FILE_STORAGE_PATH", tt.envValues[3])
 				os.Setenv("DATABASE_DSN", tt.envValues[4])
+				os.Setenv("GRPC_ADDRESS", tt.envValues[5])
+				os.Setenv("TRUSTED_SUBNET", tt.envValues[6])
+				os.Setenv("ENABLE_HTTPS", tt.envValues[7])
 			}
 			ParseFlags(options)
 			assert.Equal(t, options.ServerAddress, tt.expectedValue[0], "Правльно распаршеный SERVER_ADDRESS")
@@ -35,6 +38,9 @@ func TestParseFlags(t *testing.T) {
 			assert.Equal(t, options.LogsLevel, tt.expectedValue[2], "Правльно распаршеный LOG_LEVEL")
 			assert.Equal(t, options.FileStoragePath, tt.expectedValue[3], "Правльно распаршеный FILE_STORAGE_PATH")
 			assert.Equal(t, options.DatabaseDSN, tt.expectedValue[4], "Правльно распаршеный DATABASE_DSN")
+			assert.Equal(t, options.GRPCAddress, tt.expectedValue[5], "Правльно распаршеный DATABASE_DSN")
+			assert.Equal(t, options.TrustedSubnet, tt.expectedValue[6], "Правльно распаршеный DATABASE_DSN")
+			assert.Equal(t, options.EnableHTTPS, true, "Правльно распаршеный DATABASE_DSN")
 		})
 	}
 }
