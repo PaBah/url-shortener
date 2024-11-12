@@ -7,7 +7,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/fatih/errwrap v1.6.0
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.5.5
@@ -24,15 +24,9 @@ require (
 )
 
 require (
-	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
-	github.com/bufbuild/protovalidate-go v0.6.3 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/cel-go v0.20.1 // indirect
-	github.com/stoewer/go-strcase v1.3.0 // indirect
-	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240401170217-c3f982113cda // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 )
 
